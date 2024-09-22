@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import fetch from 'node-fetch';
+
+const fetch = require('node-fetch');
 
 // Defina a URL do seu endpoint de autenticação da SSW
 const AUTH_ENDPOINT = 'https://ssw.inf.br/api/generateToken';
