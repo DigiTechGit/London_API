@@ -23,6 +23,7 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
   fastify.get('/Motoristas', async (request, reply) => {
     try {
       const Motoristas = await prisma.motorista.findMany();
+      console.log(Motoristas);
       reply.send(Motoristas);
     } catch (error: unknown) {
       if (error instanceof Error) {
