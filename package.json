@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node src/server.ts",
+        "build": "tsup src --out-dir build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
