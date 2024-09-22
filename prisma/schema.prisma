@@ -1,0 +1,85 @@
+// prisma/schema.prisma
+
+// Especifica o provedor do banco de dados e a URL de conexão
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL") // Lê a URL do banco de dados do arquivo .env
+}
+
+// Define o gerador de cliente Prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Modelo para armazenar os dados do usuário
+model Motorista {
+  id    Int    @id @default(autoincrement()) // Chave primária com autoincremento
+  placa String @unique // A placa deve ser única no banco de dados
+  nome  String // Nome do usuário
+  email String // E-mail do usuário
+}
+
+model Ctes {
+  id              Int      @id @default(autoincrement())
+  chaveCTe        String   @unique
+  valorFrete      Float
+  placaVeiculo    String
+  previsaoEntrega DateTime
+  motoristaId     Int
+  remetenteId     Int
+  destinatarioId  Int
+  recebedorId     Int
+  statusId        Int
+
+  createdAt    DateTime      @default(now()) // Campo para registrar a data de criação
+  motorista    Motorista_ssw @relation(fields: [motoristaId], references: [id])
+  remetente    Remetente     @relation(fields: [remetenteId], references: [id])
+  destinatario Destinatario  @relation(fields: [destinatarioId], references: [id])
+  recebedor    Recebedor     @relation(fields: [recebedorId], references: [id])
+  status       StatusEnvio   @relation(fields: [statusId], references: [id]) // Relacionamento com status
+}
+
+model Motorista_ssw {
+  id   Int    @id @default(autoincrement())
+  nome String
+  cpf  String @unique
+  ctes Ctes[]
+}
+
+model Remetente {
+  id      Int    @id @default(autoincrement())
+  cnpjCPF String @unique
+  tipo    String
+  nome    String
+  ctes    Ctes[]
+}
+
+model Destinatario {
+  id      Int    @id @default(autoincrement())
+  cnpjCPF String @unique
+  tipo    String
+  nome    String
+  ctes    Ctes[]
+}
+
+model Recebedor {
+  id          Int    @id @default(autoincrement())
+  cnpjCPF     String @unique
+  tipo        String
+  nome        String
+  endereco    String
+  numero      String
+  bairro      String
+  cep         Int
+  cidade      String
+  uf          String
+  foneContato String
+  ctes        Ctes[]
+}
+
+model StatusEnvio {
+  id        Int     @id @default(autoincrement())
+  status    String  @unique
+  descricao String?
+  ctes      Ctes[]
+}
