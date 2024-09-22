@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import motoristaRoutes from './controllers/motoristaController';
 import cteRoutes from './controllers/cteController';
 import userRoutes from './controllers/LoginController';
+import RouteRomaneioStockfy from './controllers/sswController';
 
 const fastify = Fastify({ logger: true });
 const prisma = new PrismaClient();
@@ -11,6 +12,7 @@ const prisma = new PrismaClient();
 motoristaRoutes(fastify, prisma);
 cteRoutes(fastify, prisma);
 userRoutes(fastify, prisma);
+RouteRomaneioStockfy(fastify, prisma);
 
 // Iniciar o servidor
 const start = async () => {
