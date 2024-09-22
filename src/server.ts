@@ -10,6 +10,7 @@ const prisma = new PrismaClient();
 // Rotas
 motoristaRoutes(fastify, prisma);
 cteRoutes(fastify, prisma);
+userRoutes(fastify, prisma);
 
 // Iniciar o servidor
 const start = async () => {
