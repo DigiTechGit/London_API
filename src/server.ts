@@ -17,7 +17,6 @@ fastify.addHook('onRequest', (request, reply, done) => {
   done();
 });
 
-
 // Use a porta definida no ambiente (Render) ou 3000 como fallback
 const port =  3000;
 
