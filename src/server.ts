@@ -8,6 +8,9 @@ import RouteRomaneioStockfy from './controllers/sswController';
 const fastify = Fastify({ logger: true });
 const prisma = new PrismaClient();
 
+const port = 3000;
+
+
 // Rotas
 motoristaRoutes(fastify, prisma);
 cteRoutes(fastify, prisma);
@@ -17,7 +20,7 @@ RouteRomaneioStockfy(fastify, prisma);
 // Iniciar o servidor
 const start = async () => {
   try {
-    await fastify.listen({ port: 3000 });
+    await fastify.listen({ port });
     console.log('Servidor rodando na porta 3000');
   } catch (err) {
     fastify.log.error(err);
