@@ -2,7 +2,7 @@
 
 // Especifica o provedor do banco de dados e a URL de conexão
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL") // Lê a URL do banco de dados do arquivo .env
 }
 

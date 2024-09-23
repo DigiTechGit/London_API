@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node src/server.ts",
-        "build": "tsup src --out-dir build",
+    "build": "tsup src --out-dir build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,6 +13,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^22.5.5",
+    "prisma": "^5.19.1",
     "tsup": "^8.3.0",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2"
@@ -21,7 +22,6 @@
     "@prisma/client": "^5.19.1",
     "fastify": "^5.0.0",
     "node-fetch": "^2.7.0",
-    "prisma": "^5.19.1",
     "ts-node": "^10.9.2"
   }
 }
