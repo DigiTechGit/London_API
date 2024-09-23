@@ -21,6 +21,7 @@
   "dependencies": {
     "@prisma/client": "^5.19.1",
     "fastify": "^5.0.0",
+    "fastify-cors": "^6.1.0",
     "node-fetch": "^2.7.0",
     "ts-node": "^10.9.2"
   }
