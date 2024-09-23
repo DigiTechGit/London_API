@@ -1,5 +1,5 @@
 import Fastify from 'fastify';
-import fastifyCors from '@fastify/cors';
+// import fastifyCors from '@fastify/cors';
 import { PrismaClient } from '@prisma/client';
 import motoristaRoutes from './controllers/motoristaController';
 import cteRoutes from './controllers/cteController';
@@ -14,10 +14,11 @@ const prisma = new PrismaClient();
 const port =  3000;
 
 // Habilitar CORS para tratar requisições OPTIONS
-fastify.register(fastifyCors, {
-  origin: true, // Ou configure o domínio de origem específico
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Habilita métodos HTTP
-});
+// fastify.register(fastifyCors, {
+//   origin: true, // Permitir apenas esta origem
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Métodos permitidos
+//   allowedHeaders: ['Content-Type', 'Authorization'], // Cabeçalhos permitidos
+// });
 
 // Rotas
 motoristaRoutes(fastify, prisma);
