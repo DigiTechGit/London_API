@@ -10,6 +10,14 @@ import RouteRomaneioStockfy from './controllers/sswController';
 const fastify = Fastify({ logger: true });
 const prisma = new PrismaClient();
 
+fastify.addHook('onRequest', (request, reply, done) => {
+  reply.header('Access-Control-Allow-Origin', '*'); // Permitir qualquer origem
+  reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'); // Métodos permitidos
+  reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Cabeçalhos permitidos
+  done();
+});
+
+
 // Use a porta definida no ambiente (Render) ou 3000 como fallback
 const port =  3000;
 

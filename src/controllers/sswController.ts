@@ -13,7 +13,6 @@ export default function RouteRomaneioStockfy(fastify: FastifyInstance, prisma: P
 		const token = request.headers.authorization;
 		const { unidade } = request.query as { unidade: string }; // Alterado para query
 	
-		// Verifica se o token foi enviado
 		if (!token) {
 		  reply.code(401).send({ error: 'Authorization token is required' });
 		  return;
