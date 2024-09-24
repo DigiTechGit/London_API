@@ -22,9 +22,33 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
   // Listar todos os motoristas
   fastify.get('/Motoristas', async (request, reply) => {
     try {
-      const Motoristas = await prisma.motorista.findMany();
-      console.log(Motoristas);
-      reply.send(Motoristas);
+      const motoristas = await prisma.motorista.findMany();
+      const driversWithDetails = [];
+  
+      for (const motorista of motoristas) {
+        const driverId = motorista.id; 
+  
+        const response = await fetch(`https://api.getcircuit.com/public/v0.2b/drivers/${driverId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${process.env.CIRCUIT_API_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+  
+        if (response.ok) {
+          const driverData = await response.json();
+          driversWithDetails.push({
+            motorista,
+            circuitData: driverData
+          });
+        } else {
+          console.log(`Falha ao obter dados do driver ${driverId}`);
+        }
+      }
+  
+      // Enviar os motoristas junto com os detalhes obtidos da API do Circuit
+      reply.send(driversWithDetails);
     } catch (error: unknown) {
       if (error instanceof Error) {
         reply.code(500).send({ error: error.message });
