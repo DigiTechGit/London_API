@@ -1,6 +1,13 @@
 import { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 
+const apiKey = process.env.API_KEY;
+import { endpoints } from "../utils/API";
+
+const headers = new Headers();
+headers.append('Content-Type', 'application/json');
+headers.append('Authorization', `Basic ${btoa(`${apiKey}:`)}`);
+
 export default function motoristaRoutes(fastify: FastifyInstance, prisma: PrismaClient) {
   // Criar um motorista
   fastify.post('/Motorista', async (request, reply) => {
@@ -30,21 +37,22 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
       const driversWithDetails = [];
   
       for (const motorista of motoristas) {
-        const driverId = motorista.id; 
-  
-        const response = await fetch(`https://api.getcircuit.com/public/v0.2b/drivers/${driverId}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${process.env.CIRCUIT_API_KEY}`,
-            'Content-Type': 'application/json'
-          }
+        const driverId = motorista.idCircuit; 
+        console.log(driverId)
+        const response = await fetch(`${endpoints.getCircuitBase}/${driverId}`, {
+          method: "GET",
+          headers: headers,
         });
   
         if (response.ok) {
           const driverData = await response.json();
           driversWithDetails.push({
-            motorista,
-            circuitData: driverData
+            id: motorista.id,
+            idCircuit: motorista.idCircuit,
+            placa:  motorista.placa,
+            name: driverData.name,
+            email: driverData.email,
+            active: driverData.active
           });
         } else {
           console.log(`Falha ao obter dados do driver ${driverId}`);
