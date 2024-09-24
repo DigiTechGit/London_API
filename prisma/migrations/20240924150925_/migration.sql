@@ -1,9 +1,7 @@
 -- CreateTable
 CREATE TABLE "Motorista" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "placa" TEXT NOT NULL,
-    "nome" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
 
     CONSTRAINT "Motorista_pkey" PRIMARY KEY ("id")
 );
