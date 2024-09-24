@@ -5,9 +5,9 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
   // Criar um motorista
   fastify.post('/Motorista', async (request, reply) => {
     try {
-      const { placa, nome, email } = request.body as { placa: string, nome: string, email: string };
+      const { placa, id } = request.body as { placa: string, id: string };
       const Motorista = await prisma.motorista.create({
-        data: { placa, nome, email },
+        data: { placa, id },
       });
       reply.code(201).send(Motorista);
     } catch (error: unknown) {
@@ -38,7 +38,7 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
   fastify.get('/Motorista/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const Motorista = await prisma.motorista.findUnique({ where: { id: Number(id) } });
+      const Motorista = await prisma.motorista.findUnique({ where: { id } });
       if (Motorista) {
         reply.send(Motorista);
       } else {
@@ -57,10 +57,10 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
   fastify.put('/Motorista/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const { placa, nome, email } = request.body as { placa: string, nome: string, email: string };
+      const { placa } = request.body as { placa: string };
       const Motorista = await prisma.motorista.update({
-        where: { id: Number(id) },
-        data: { placa, nome, email },
+        where: { id },
+        data: { placa },
       });
       reply.send(Motorista);
     } catch (error: unknown) {
@@ -76,7 +76,7 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
   fastify.delete('/Motorista/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      await prisma.motorista.delete({ where: { id: Number(id) } });
+      await prisma.motorista.delete({ where: { id } });
       reply.code(204).send();
     } catch (error: unknown) {
       if (error instanceof Error) {

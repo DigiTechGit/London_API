@@ -1,56 +1,95 @@
-// import { PrismaClient } from '@prisma/client';
-// import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { PrismaClient } from '@prisma/client';
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
-// const prisma = new PrismaClient();
+const prisma = new PrismaClient();
 
-// export default async function statusController(fastify: FastifyInstance) {
-// 	// Create
-// 	fastify.post('/routes', async (request: FastifyRequest, reply: FastifyReply) => {
-// 		const { name, path } = request.body as { name: string; path: string };
-// 		const newRoute = await prisma.route.create({
-// 			data: {
-// 				name,
-// 				path,
-// 			},
-// 		});
-// 		reply.send(newRoute);
-// 	});
+export default async function statusRoutes(fastify: FastifyInstance) {
+  // Criar um novo status
+  fastify.post('/status', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { status, descricao } = request.body as any;
+      console.log(request.body);
+      const newStatus = await prisma.statusEnvio.create({
+        data: {
+          status,
+          descricao,
+        },
+      });
+  
+      reply.code(201).send(newStatus);
+    } catch (error) {
+      console.error(error);
+      reply.code(500).send({ error: 'Erro ao criar o status' });
+    }
+  });
+  
 
-// 	// Read all
-// 	fastify.get('/routes', async (request: FastifyRequest, reply: FastifyReply) => {
-// 		const routes = await prisma.route.findMany();
-// 		reply.send(routes);
-// 	});
+  // Obter todos os status
+  fastify.get('/status', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const statusList = await prisma.statusEnvio.findMany();
+      reply.send(statusList);
+    } catch (error) {
+      reply.code(500).send({ error: 'Erro ao obter os status' });
+    }
+  });
 
-// 	// Read one
-// 	fastify.get('/routes/:id', async (request: FastifyRequest, reply: FastifyReply) => {
-// 		const { id } = request.params as { id: string };
-// 		const route = await prisma.route.findUnique({
-// 			where: { id: Number(id) },
-// 		});
-// 		reply.send(route);
-// 	});
+  // Obter um status por ID
+  fastify.get('/status/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const status = await prisma.statusEnvio.findUnique({
+        where: {
+          id: Number(id),
+        },
+      });
 
-// 	// Update
-// 	fastify.put('/routes/:id', async (request: FastifyRequest, reply: FastifyReply) => {
-// 		const { id } = request.params as { id: string };
-// 		const { name, path } = request.body as { name: string; path: string };
-// 		const updatedRoute = await prisma.route.update({
-// 			where: { id: Number(id) },
-// 			data: {
-// 				name,
-// 				path,
-// 			},
-// 		});
-// 		reply.send(updatedRoute);
-// 	});
+      if (!status) {
+        reply.code(404).send({ error: 'Status não encontrado' });
+      } else {
+        reply.send(status);
+      }
+    } catch (error) {
+      reply.code(500).send({ error: 'Erro ao obter o status' });
+    }
+  });
 
-// 	// Delete
-// 	fastify.delete('/routes/:id', async (request: FastifyRequest, reply: FastifyReply) => {
-// 		const { id } = request.params as { id: string };
-// 		await prisma.route.delete({
-// 			where: { id: Number(id) },
-// 		});
-// 		reply.send({ message: 'Route deleted successfully' });
-// 	});
-// }
+  // Atualizar um status por ID
+  fastify.put('/status/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { status, descricao } = request.body as { status: string, descricao?: string };
+
+      const updatedStatus = await prisma.statusEnvio.update({
+        where: {
+          id: Number(id),
+        },
+        data: {
+          status,
+          descricao,
+        },
+      });
+
+      reply.send(updatedStatus);
+    } catch (error) {
+      reply.code(500).send({ error: 'Erro ao atualizar o status' });
+    }
+  });
+
+  // Deletar um status por ID
+  fastify.delete('/status/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { id } = request.params as { id: string };
+
+      await prisma.statusEnvio.delete({
+        where: {
+          id: Number(id),
+        },
+      });
+
+      reply.code(204).send();
+    } catch (error) {
+      reply.code(500).send({ error: 'Erro ao deletar o status' });
+    }
+  });
+}
