@@ -13,8 +13,9 @@ generator client {
 
 // Modelo para armazenar os dados do usuário
 model Motorista {
-  id    String @id // Chave primária com autoincremento
-  placa String @unique // A placa deve ser única no banco de dados
+  id        Int    @id @default(autoincrement())
+  placa     String @unique // A placa deve ser única no banco de dados
+  idCircuit String
 }
 
 model Ctes {

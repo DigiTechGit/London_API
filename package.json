@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node src/server.ts",
+    "start": "ts-node src/server.ts --watch",
     "build": "tsup src --out-dir build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

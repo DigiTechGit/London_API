@@ -5,10 +5,13 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
   // Criar um motorista
   fastify.post('/Motorista', async (request, reply) => {
     try {
-      const { placa, id } = request.body as { placa: string, id: string };
+      console.log('Request body:', request.body); // Log para verificar o que está sendo enviado
+      const { placa, idCircuit } = request.body as { placa: string, idCircuit: string };
+      
       const Motorista = await prisma.motorista.create({
-        data: { placa, id },
+        data: { placa, idCircuit },
       });
+  
       reply.code(201).send(Motorista);
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -18,6 +21,7 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
       }
     }
   });
+  
 
   // Listar todos os motoristas
   fastify.get('/Motoristas', async (request, reply) => {
@@ -62,7 +66,7 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
   fastify.get('/Motorista/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const Motorista = await prisma.motorista.findUnique({ where: { id } });
+      const Motorista = await prisma.motorista.findUnique({ where: { id: Number(id) } });
       if (Motorista) {
         reply.send(Motorista);
       } else {
@@ -83,7 +87,7 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
       const { id } = request.params as { id: string };
       const { placa } = request.body as { placa: string };
       const Motorista = await prisma.motorista.update({
-        where: { id },
+        where: { id: Number(id) },
         data: { placa },
       });
       reply.send(Motorista);
@@ -100,7 +104,7 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
   fastify.delete('/Motorista/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      await prisma.motorista.delete({ where: { id } });
+      await prisma.motorista.delete({ where: { id: Number(id) } });
       reply.code(204).send();
     } catch (error: unknown) {
       if (error instanceof Error) {
