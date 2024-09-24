@@ -91,7 +91,7 @@ export default function circuitController(fastify: FastifyInstance) {
       if (response.ok) {
         const stops = await response.json();
   
-        reply.code(200).send(true);
+        reply.code(200).send(stops);
       } else {
         reply.code(400).send({ error: "Failed to import stops" });
       }
