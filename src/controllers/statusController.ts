@@ -7,20 +7,22 @@ export default async function statusRoutes(fastify: FastifyInstance) {
   // Criar um novo status
   fastify.post('/status', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { status, descricao } = request.body as { status: string, descricao?: string };
-
+      const { status, descricao } = request.body as any;
+      console.log(request.body);
       const newStatus = await prisma.statusEnvio.create({
         data: {
           status,
           descricao,
         },
       });
-
+  
       reply.code(201).send(newStatus);
     } catch (error) {
+      console.error(error);
       reply.code(500).send({ error: 'Erro ao criar o status' });
     }
   });
+  
 
   // Obter todos os status
   fastify.get('/status', async (request: FastifyRequest, reply: FastifyReply) => {

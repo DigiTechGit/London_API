@@ -19,6 +19,7 @@ fastify.addHook('onRequest', (request, reply, done) => {
 
 const port =  3000;
 
+fastify.register(fastifyFormbody);
 
 statusRoutes(fastify);
 motoristaRoutes(fastify, prisma);
@@ -42,3 +43,7 @@ const start = async () => {
 };
 
 start();
+function fastifyFormbody(instance: FastifyInstance<RawServerDefault, IncomingMessage, ServerResponse<IncomingMessage>, FastifyBaseLogger, FastifyTypeProvider>, opts: FastifyPluginOptions, done: (err?: Error | undefined) => void): void {
+  throw new Error('Function not implemented.');
+}
+
