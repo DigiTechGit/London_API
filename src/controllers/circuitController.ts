@@ -14,7 +14,7 @@ export default function circuitController(fastify: FastifyInstance) {
 
   fastify.get('/getCircuitPlans', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const response = await fetch(`${endpoints.getCircuitPlans}`, {
+      const response = await fetch(`${endpoints.getCircuitBase}/plans`, {
         method: "GET",
         headers: headers,
       });
@@ -41,7 +41,7 @@ export default function circuitController(fastify: FastifyInstance) {
     const model = request.body;
   
     try {
-      const response = await fetch(`${endpoints.getCircuitPlans}`, {
+      const response = await fetch(`${endpoints.getCircuitBase}/plans`, {
         method: "POST",
         headers: headers,
         body: JSON.stringify(model),
@@ -77,73 +77,130 @@ export default function circuitController(fastify: FastifyInstance) {
       reply.code(500).send({ error: error.message });
     }
   });
+
+  fastify.put('/importStops', async (request: FastifyRequest, reply: FastifyReply) => {
+    const model = request.body;
+    const { planId } = request.query as { planId: string };
+  
+    try {
+      const response = await fetch(`${endpoints.getCircuitBase}/${planId}/stops:import`, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(model),
+      });
+  
+      if (response.ok) {
+        const stops = await response.json();
+  
+        reply.code(200).send(true);
+      } else {
+        reply.code(400).send({ error: "Failed to import stops" });
+      }
+    } catch (error: any) {
+      reply.code(500).send({ error: error.message });
+    }
+  });
+
+  fastify.put('/optimizePlan', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { planId } = request.query as { planId: string };
+  
+    try {
+      const response = await fetch(`${endpoints.getCircuitBase}/${planId}:optimize`, {
+        method: "POST",
+        headers: headers,
+      });
+  
+      if (response.ok) {
+        const operation = await response.json();
+  
+        reply.code(200).send(operation);
+      } else {
+        reply.code(400).send({ error: "Failed to optimize plan" });
+      }
+    } catch (error: any) {
+      reply.code(500).send({ error: error.message });
+    }
+  });
+
+  fastify.put('/distributePlan', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { planId } = request.query as { planId: string };
+  
+    try {
+      const response = await fetch(`${endpoints.getCircuitBase}/${planId}:distribute`, {
+        method: "POST",
+        headers: headers,
+      });
+  
+      if (response.ok) {
+        const operation = await response.json();
+  
+        reply.code(200).send(operation);
+      } else {
+        reply.code(400).send({ error: "Failed to distribute plan" });
+      }
+    } catch (error: any) {
+      reply.code(500).send({ error: error.message });
+    }
+  });
+
+  fastify.get('/operationProgress', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { operationId } = request.query as { operationId: string };
+  
+    try {
+      const response = await fetch(`${endpoints.getCircuitBase}/${operationId}`, {
+        method: "GET",
+        headers: headers,
+      });
+  
+      if (response.ok) {
+        const operation = await response.json();
+  
+        reply.code(200).send(operation);
+      } else {
+        reply.code(400).send({ error: "Failed to get operation" });
+      }
+    } catch (error: any) {
+      reply.code(500).send({ error: error.message });
+    }
+  });
+
+  fastify.get('/operationProgress', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { operationId } = request.query as { operationId: string };
+  
+    try {
+      const response = await fetch(`${endpoints.getCircuitBase}/${operationId}`, {
+        method: "GET",
+        headers: headers,
+      });
+  
+      if (response.ok) {
+        const operation = await response.json();
+  
+        reply.code(200).send(operation);
+      } else {
+        reply.code(400).send({ error: "Failed to get operation" });
+      }
+    } catch (error: any) {
+      reply.code(500).send({ error: error.message });
+    }
+  });
+
+  fastify.get('/getDepots', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const response = await fetch(`${endpoints.getCircuitBase}/depots`, {
+        method: "GET",
+        headers: headers,
+      });
+
+      if (response.ok) {
+        const depots = await response.json();
+
+        reply.code(200).send(depots);
+      } else {
+        reply.code(400).send({ error: "Failed to get depots" });
+      }
+    } catch (error: any) {
+      reply.code(500).send({ error: error.message });
+    }
+  });
 }
-
-// export const distributeCircuitPlan = async (planId: string) => {
-//   headers.delete('Content-Type');
-//   try {
-//     const response = await fetch(`${endpoints.getCircuitBase}/${planId}:distribute`, {
-//       method: "POST",
-//       headers: headers,
-//     });
-
-//     if (response.ok) {
-//       return await response.json();
-//     } else {
-//       throw new Error("Failed to optimize plan");
-//     }
-//   } catch (error) {
-//     throw new Error((error as Error).message);
-//   }
-// }
-
-// export const operationProgress = async (operationId: string) => {
-//   try {
-//     const response = await fetch(`${endpoints.getCircuitBase}/${operationId}`, {
-//       method: "GET",
-//       headers: headers,
-//     });
-
-//     if (response.ok) {
-//       return await response.json();
-//     } else {
-//       throw new Error("Failed to get operation");
-//     }
-//   } catch (error) {
-//     throw new Error((error as Error).message);
-//   }
-// }
-
-// export const getDrivers = async () => {
-//   try {
-//     const response = await fetch(`${endpoints.getCircuitDrivers}`, {
-//       method: "GET",
-//       headers: headers,
-//     });
-
-//     if (response.ok) {
-//       return await response.json();
-//     } else {
-//       throw new Error("Failed to get drivers");
-//     }
-//   } catch (error) {
-//     throw new Error((error as Error).message);
-//   }
-// }
-
-// export const getDepots = async () => {
-//   try {
-//     const response = await fetch(`${endpoints.getCircuitDepots}`, {
-//       method: "GET",
-//       headers: headers,
-//     });
-
-//     if (response.ok) {
-//       return await response.json();
-//     } else {
-//       throw new Error("Failed to get depots");
-//     }
-//   } catch (error) {
-//     throw new Error((error as Error).message);
-//   }
-// }
