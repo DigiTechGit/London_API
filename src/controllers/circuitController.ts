@@ -1,11 +1,10 @@
 import fastify, { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+const apiKey = process.env.API_KEY;
 
 import { endpoints } from "../utils/API";
 
-const apiKey = 'AtLbZqdywTLWAz5zyATR';
 const headers = new Headers();
 headers.append('Content-Type', 'application/json');
 headers.append('Authorization', `Basic ${btoa(`${apiKey}:`)}`);
@@ -137,27 +136,6 @@ export default function circuitController(fastify: FastifyInstance) {
         reply.code(200).send(operation);
       } else {
         reply.code(400).send({ error: "Failed to distribute plan" });
-      }
-    } catch (error: any) {
-      reply.code(500).send({ error: error.message });
-    }
-  });
-
-  fastify.get('/operationProgress', async (request: FastifyRequest, reply: FastifyReply) => {
-    const { operationId } = request.query as { operationId: string };
-  
-    try {
-      const response = await fetch(`${endpoints.getCircuitBase}/${operationId}`, {
-        method: "GET",
-        headers: headers,
-      });
-  
-      if (response.ok) {
-        const operation = await response.json();
-  
-        reply.code(200).send(operation);
-      } else {
-        reply.code(400).send({ error: "Failed to get operation" });
       }
     } catch (error: any) {
       reply.code(500).send({ error: error.message });

@@ -6,6 +6,9 @@ import userRoutes from './controllers/LoginController';
 import RouteRomaneioStockfy from './controllers/sswController';
 import statusRoutes from './controllers/statusController';
 import circuitController from './controllers/circuitController';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const fastify = Fastify({ logger: true });
 const prisma = new PrismaClient();
