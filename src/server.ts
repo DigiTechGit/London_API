@@ -4,7 +4,7 @@ import motoristaRoutes from './controllers/motoristaController';
 import cteRoutes from './controllers/cteController';
 import userRoutes from './controllers/LoginController';
 import RouteRomaneioStockfy from './controllers/sswController';
-//import statusRoutes from './controllers/statusController';
+import statusRoutes from './controllers/statusController';
 import circuitController from './controllers/circuitController';
 
 const fastify = Fastify({ logger: true });
@@ -20,7 +20,7 @@ fastify.addHook('onRequest', (request, reply, done) => {
 const port =  3000;
 
 
-//statusRoutes(fastify);
+statusRoutes(fastify);
 motoristaRoutes(fastify, prisma);
 cteRoutes(fastify, prisma);
 userRoutes(fastify, prisma);
