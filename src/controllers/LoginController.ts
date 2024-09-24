@@ -1,10 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { endpoints } from "../utils/API";
 
 const fetch = require('node-fetch');
-
-// Defina a URL do seu endpoint de autenticação da SSW
-const AUTH_ENDPOINT = 'https://ssw.inf.br/api/generateToken';
 
 export default function userRoutes(fastify: FastifyInstance, prisma: PrismaClient) {
   fastify.post('/User', async (request: FastifyRequest, reply: FastifyReply) => {
@@ -16,7 +14,7 @@ export default function userRoutes(fastify: FastifyInstance, prisma: PrismaClien
       };
 
       // Chamada à API da SSW para autenticação
-      const authResponse = await fetch(AUTH_ENDPOINT, {
+      const authResponse = await fetch(endpoints.generateToken, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
