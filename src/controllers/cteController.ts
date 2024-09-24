@@ -85,4 +85,22 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
       reply.status(500).send({ error: 'Failed to create CTe' });
     }
   });
+
+  // rota para listar quantidade de ctes com status 1
+  fastify.get('/quantidadeCtesPorStatus', async (request, reply) => {
+    try {
+      // pegue o código do status da query
+		  const { status } = request.query as { status: number }; // Alterado para query
+
+      const ctes = await prisma.ctes.findMany({
+        where: {
+          statusId: status
+        }
+      });
+
+      reply.status(200).send(ctes);
+    } catch (error) {
+      reply.status(500).send({ error: 'Failed to list CTe' });
+    }
+  });
 }
