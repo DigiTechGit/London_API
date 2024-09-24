@@ -58,8 +58,6 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
           console.log(`Falha ao obter dados do driver ${driverId}`);
         }
       }
-  
-      // Enviar os motoristas junto com os detalhes obtidos da API do Circuit
       reply.send(driversWithDetails);
     } catch (error: unknown) {
       if (error instanceof Error) {
