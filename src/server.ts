@@ -5,6 +5,7 @@ import cteRoutes from './controllers/cteController';
 import userRoutes from './controllers/LoginController';
 import RouteRomaneioStockfy from './controllers/sswController';
 //import statusRoutes from './controllers/statusController';
+import circuitController from './controllers/circuitController';
 
 const fastify = Fastify({ logger: true });
 const prisma = new PrismaClient();
@@ -24,6 +25,7 @@ motoristaRoutes(fastify, prisma);
 cteRoutes(fastify, prisma);
 userRoutes(fastify, prisma);
 RouteRomaneioStockfy(fastify, prisma);
+circuitController(fastify);
 
 fastify.get('/', async (request, reply) => {
   reply.send({ status: 'Servidor rodando corretamente' });

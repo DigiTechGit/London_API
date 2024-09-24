@@ -8,5 +8,5 @@ export const endpoints = {
 	getCircuitPlans: `${API_CIRCUIT_BASE_URL}/plans`,
 	getCircuitDrivers: `${API_CIRCUIT_BASE_URL}/drivers`,
 	getCircuitDepots: `${API_CIRCUIT_BASE_URL}/depots`,
-	getCircuitStops: `${API_CIRCUIT_BASE_URL}`,
+	getCircuitBase: `${API_CIRCUIT_BASE_URL}`,
 };
