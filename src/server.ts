@@ -7,6 +7,8 @@ import RouteRomaneioStockfy from './controllers/sswController';
 import statusRoutes from './controllers/statusController';
 import circuitController from './controllers/circuitController';
 import dotenv from 'dotenv';
+import cron from 'node-cron';
+import { buscarEInserirCtesRecorrente } from './services/cteService';
 
 dotenv.config();
 
@@ -31,6 +33,13 @@ circuitController(fastify);
 
 fastify.get('/', async (request, reply) => {
   reply.send({ status: 'Servidor rodando corretamente' });
+});
+
+
+// Executa o job de 5 em 5 minutos
+cron.schedule('*/5 * * * *', async () => {
+  console.log('Iniciando job de busca de CTe...');
+  await buscarEInserirCtesRecorrente();
 });
 
 const start = async () => {

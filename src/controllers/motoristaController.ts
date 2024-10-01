@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 
 const apiKey = process.env.API_KEY;
 import { endpoints } from "../utils/API";
+import { MotoristaService } from '../services/motoristaService';
 
 const headers = new Headers();
 headers.append('Content-Type', 'application/json');
@@ -33,31 +34,7 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
   // Listar todos os motoristas
   fastify.get('/Motoristas', async (request, reply) => {
     try {
-      const motoristas = await prisma.motorista.findMany();
-      const driversWithDetails = [];
-  
-      for (const motorista of motoristas) {
-        const driverId = motorista.idCircuit; 
-        console.log(driverId)
-        const response = await fetch(`${endpoints.getCircuitBase}/${driverId}`, {
-          method: "GET",
-          headers: headers,
-        });
-  
-        if (response.ok) {
-          const driverData = await response.json();
-          driversWithDetails.push({
-            id: motorista.id,
-            idCircuit: motorista.idCircuit,
-            placa:  motorista.placa,
-            name: driverData.name,
-            email: driverData.email,
-            active: driverData.active
-          });
-        } else {
-          console.log(`Falha ao obter dados do driver ${driverId}`);
-        }
-      }
+      const driversWithDetails = await MotoristaService.getMotoristasComDetalhes();
       reply.send(driversWithDetails);
     } catch (error: unknown) {
       if (error instanceof Error) {
