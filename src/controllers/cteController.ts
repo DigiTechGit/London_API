@@ -18,8 +18,10 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
 
     try {
       // Criar ou encontrar o motorista
-      const motorista = await prisma.motorista_ssw.create({
-        data: {
+      const motorista = await prisma.motorista_ssw.upsert({
+        where: { cpf: cpfMotorista },
+        update: {},
+        create: {
           nome: nomeMotorista,
           cpf: cpfMotorista
         }
@@ -94,7 +96,14 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
 
       const ctes = await prisma.ctes.findMany({
         where: {
-          statusId: status
+          statusId: Number(status)
+        },
+        include: {
+          motorista: true,    // Incluir dados do motorista
+          remetente: true,    // Incluir dados do remetente
+          destinatario: true, // Incluir dados do destinatário
+          recebedor: true,    // Incluir dados do recebedor
+          status: true        // Incluir dados do status
         }
       });
 

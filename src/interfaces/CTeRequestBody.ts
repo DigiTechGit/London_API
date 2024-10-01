@@ -1,18 +1,18 @@
 interface Remetente {
   cnpjCPF: string;
-  tipo: 'PJ' | 'PF';
+  tipo?: 'PJ' | 'PF';
   nome: string;
 }
 
 interface Destinatario {
   cnpjCPF: string;
-  tipo: 'PJ' | 'PF';
+  tipo?: 'PJ' | 'PF';
   nome: string;
 }
 
 interface Recebedor {
   cnpjCPF: string;
-  tipo: 'PJ' | 'PF';
+  tipo?: 'PJ' | 'PF';
   nome: string;
   endereco: string;
   numero: string;
@@ -20,7 +20,7 @@ interface Recebedor {
   cep: number;
   cidade: string;
   uf: string;
-  foneContato: string;
+  foneContato?: string;
 }
 
 export interface CTeRequestBody {

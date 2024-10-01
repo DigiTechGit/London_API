@@ -48,7 +48,7 @@ model Motorista_ssw {
 model Remetente {
   id      Int    @id @default(autoincrement())
   cnpjCPF String @unique
-  tipo    String
+  tipo    String?
   nome    String
   ctes    Ctes[]
 }
@@ -56,7 +56,7 @@ model Remetente {
 model Destinatario {
   id      Int    @id @default(autoincrement())
   cnpjCPF String @unique
-  tipo    String
+  tipo    String?
   nome    String
   ctes    Ctes[]
 }
@@ -64,7 +64,7 @@ model Destinatario {
 model Recebedor {
   id          Int    @id @default(autoincrement())
   cnpjCPF     String @unique
-  tipo        String
+  tipo        String?
   nome        String
   endereco    String
   numero      String
@@ -72,7 +72,7 @@ model Recebedor {
   cep         Int
   cidade      String
   uf          String
-  foneContato String
+  foneContato String?
   ctes        Ctes[]
 }
 
