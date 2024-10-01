@@ -6,7 +6,7 @@ import { Cte } from '../types/cte';
 
 const prisma = new PrismaClient();
 
-export async function buscarEInserirCtesRecorrente() {
+export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
   try {
     const motoristasSalvos = await prisma.motorista.findMany({
       select: {
@@ -34,7 +34,7 @@ export async function buscarEInserirCtesRecorrente() {
 
 
     const token = authData.token;
-    const url = `${endpoints.roteirizaRomaneioStockfy}?siglaEnt=CTA`;
+    const url = `${endpoints.roteirizaRomaneioStockfy}?siglaEnt=${UNIDADE}`;
 
     // Faz a requisição para a API externa usando a função fornecida
     const response = await fetch(url, {
@@ -57,14 +57,19 @@ export async function buscarEInserirCtesRecorrente() {
     const ctesFiltrados = ctes.filter(cte => placasSalvas.includes(cte.placaVeiculo));
 
     for (const cte of ctesFiltrados) {
+
+      const [day, month, year] = cte.previsaoEntrega.split('/');
+      const dataPrevisao = `20${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      
       await prisma.ctes.upsert({
         where: { chaveCTe: cte.chaveCTe },
         update: {},
         create: {
           chaveCTe: cte.chaveCTe,
+          Unidade: UNIDADE,
           valorFrete: cte.valorFrete,
           placaVeiculo: cte.placaVeiculo,
-          previsaoEntrega: cte.previsaoEntrega,
+          previsaoEntrega: dataPrevisao,
           motorista: { 
             connectOrCreate: {
               where: { cpf: cte.cpfMotorista },

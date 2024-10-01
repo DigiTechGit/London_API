@@ -24,6 +24,7 @@ model Ctes {
   valorFrete      Float
   placaVeiculo    String
   previsaoEntrega String
+  Unidade         String @default("CTA")
   motoristaId     Int
   remetenteId     Int
   destinatarioId  Int

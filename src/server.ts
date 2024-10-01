@@ -9,6 +9,7 @@ import circuitController from './controllers/circuitController';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
 import { buscarEInserirCtesRecorrente } from './services/cteService';
+let jobRunning = false; 
 
 dotenv.config();
 
@@ -36,10 +37,22 @@ fastify.get('/', async (request, reply) => {
 });
 
 
-// Executa o job de 5 em 5 minutos
 cron.schedule('*/5 * * * *', async () => {
-  console.log('Iniciando job de busca de CTe...');
-  await buscarEInserirCtesRecorrente();
+  if (jobRunning) {
+    console.log('O job já está em execução. Ignorando nova execução.');
+    return; // Não executa o job se ele já estiver rodando
+  }
+
+  try {
+    jobRunning = true; // Marca o job como em execução
+    console.log('Iniciando job de busca de CTe...');
+    await buscarEInserirCtesRecorrente("CTA"); 
+  } catch (error) {
+    console.error('Erro ao executar o job:', error);
+  } finally {
+    jobRunning = false; 
+    console.log('Job finalizado.');
+  }
 });
 
 const start = async () => {
