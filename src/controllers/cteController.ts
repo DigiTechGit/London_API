@@ -89,14 +89,15 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
   });
 
   // rota para listar quantidade de ctes com status 1
-  fastify.get('/quantidadeCtesPorStatus', async (request, reply) => {
+  fastify.get('/quantidadeCtesPorStatusEUnidade', async (request, reply) => {
     try {
       // pegue o código do status da query
-		  const { status } = request.query as { status: number }; // Alterado para query
+		  const { status, unidade } = request.query as { status: number, unidade: string }; // Alterado para query
 
       const ctes = await prisma.ctes.findMany({
         where: {
-          statusId: Number(status)
+          statusId: Number(status),
+          Unidade: unidade
         },
         include: {
           motorista: true,    // Incluir dados do motorista
