@@ -19,11 +19,11 @@ model Motorista {
 }
 
 model Ctes {
-  id              Int      @id @default(autoincrement())
-  chaveCTe        String   @unique
+  id              Int    @id @default(autoincrement())
+  chaveCTe        String @unique
   valorFrete      Float
   placaVeiculo    String
-  previsaoEntrega DateTime
+  previsaoEntrega String
   motoristaId     Int
   remetenteId     Int
   destinatarioId  Int
@@ -46,30 +46,30 @@ model Motorista_ssw {
 }
 
 model Remetente {
-  id      Int    @id @default(autoincrement())
-  cnpjCPF String @unique
+  id      Int     @id @default(autoincrement())
+  cnpjCPF String  @unique
   tipo    String?
   nome    String
   ctes    Ctes[]
 }
 
 model Destinatario {
-  id      Int    @id @default(autoincrement())
-  cnpjCPF String @unique
+  id      Int     @id @default(autoincrement())
+  cnpjCPF String  @unique
   tipo    String?
   nome    String
   ctes    Ctes[]
 }
 
 model Recebedor {
-  id          Int    @id @default(autoincrement())
-  cnpjCPF     String @unique
+  id          Int     @id @default(autoincrement())
+  cnpjCPF     String  @unique
   tipo        String?
   nome        String
   endereco    String
   numero      String
   bairro      String
-  cep         Int
+  cep         String
   cidade      String
   uf          String
   foneContato String?

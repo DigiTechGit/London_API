@@ -33,7 +33,7 @@ export interface Cte {
     endereco: string;
     numero: string;
     bairro: string;
-    cep: number;
+    cep: string;
     cidade: string;
     uf: string;
     foneContato: string;

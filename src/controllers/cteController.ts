@@ -73,7 +73,7 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
           chaveCTe,
           valorFrete,
           placaVeiculo,
-          previsaoEntrega: new Date(previsaoEntrega),
+          previsaoEntrega: previsaoEntrega,
           motoristaId: motorista.id,
           remetenteId: remetenteEntity.id,
           destinatarioId: destinatarioEntity.id,
