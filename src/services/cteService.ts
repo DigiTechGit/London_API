@@ -58,18 +58,15 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
 
     for (const cte of ctesFiltrados) {
 
-      const [day, month, year] = cte.previsaoEntrega.split('/');
-      const dataPrevisao = `20${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      
       await prisma.ctes.upsert({
         where: { chaveCTe: cte.chaveCTe },
         update: {},
         create: {
           chaveCTe: cte.chaveCTe,
-          //Unidade: UNIDADE,
+          Unidade: UNIDADE,
           valorFrete: cte.valorFrete,
           placaVeiculo: cte.placaVeiculo,
-          previsaoEntrega: dataPrevisao,
+          previsaoEntrega: cte.previsaoEntrega,
           motorista: { 
             connectOrCreate: {
               where: { cpf: cte.cpfMotorista },
