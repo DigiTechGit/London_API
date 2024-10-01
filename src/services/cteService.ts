@@ -66,7 +66,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
         update: {},
         create: {
           chaveCTe: cte.chaveCTe,
-          Unidade: UNIDADE,
+          //Unidade: UNIDADE,
           valorFrete: cte.valorFrete,
           placaVeiculo: cte.placaVeiculo,
           previsaoEntrega: dataPrevisao,
