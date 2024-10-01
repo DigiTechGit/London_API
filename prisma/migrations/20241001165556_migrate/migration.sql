@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Ctes" ALTER COLUMN "Unidade" DROP NOT NULL;

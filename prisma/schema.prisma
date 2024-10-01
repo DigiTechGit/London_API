@@ -19,12 +19,12 @@ model Motorista {
 }
 
 model Ctes {
-  id              Int    @id @default(autoincrement())
-  chaveCTe        String @unique
+  id              Int     @id @default(autoincrement())
+  chaveCTe        String  @unique
   valorFrete      Float
   placaVeiculo    String
   previsaoEntrega String
-  Unidade         String @default("CTA")
+  Unidade         String? @default("CTA")
   motoristaId     Int
   remetenteId     Int
   destinatarioId  Int
