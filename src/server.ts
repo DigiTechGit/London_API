@@ -40,11 +40,11 @@ fastify.get('/', async (request, reply) => {
 cron.schedule('*/5 * * * *', async () => {
   if (jobRunning) {
     console.log('O job já está em execução. Ignorando nova execução.');
-    return; // Não executa o job se ele já estiver rodando
+    return;
   }
 
   try {
-    jobRunning = true; // Marca o job como em execução
+    jobRunning = true; 
     console.log('Iniciando job de busca de CTe...');
     await buscarEInserirCtesRecorrente("CTA"); 
   } catch (error) {

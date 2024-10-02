@@ -83,3 +83,10 @@ model StatusEnvio {
   descricao String?
   ctes      Ctes[]
 }
+
+model log {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  desc      String
+  tp        String
+}

@@ -88,10 +88,8 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
     }
   });
 
-  // rota para listar quantidade de ctes com status 1
   fastify.get('/quantidadeCtesPorStatusEUnidade', async (request, reply) => {
     try {
-      // pegue o código do status da query
 		  const { status, unidade } = request.query as { status: number, unidade: string }; // Alterado para query
 
       const ctes = await prisma.ctes.findMany({
@@ -109,6 +107,25 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
       });
 
       reply.status(200).send(ctes);
+    } catch (error) {
+      reply.status(500).send({ error: 'Failed to list CTe' });
+    }
+  });
+
+  fastify.get('/LOG', async (request, reply) => {
+    try {
+		  const { tpLog } = request.query as { tpLog: string }; // Alterado para query
+
+      const log = await prisma.log.findFirst({
+        where: {
+          tp: tpLog.toUpperCase(),
+        },
+        orderBy: {
+          createdAt: 'desc', 
+        },
+      });
+      
+      reply.status(200).send(log);
     } catch (error) {
       reply.status(500).send({ error: 'Failed to list CTe' });
     }

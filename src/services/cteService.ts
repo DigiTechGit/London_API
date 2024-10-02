@@ -1,7 +1,5 @@
-// services/cteService.ts
 import { PrismaClient } from '@prisma/client';
 import { endpoints } from "../utils/API";
-import { Motorista } from '@prisma/client';
 import { Cte } from '../types/cte';
 
 const prisma = new PrismaClient();
@@ -13,7 +11,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
         placa: true,
       },
     });
-    console.log(motoristasSalvos)
+
     const placasSalvas = motoristasSalvos.map(motorista => motorista.placa);
 
     const authResponse = await fetch(endpoints.generateToken, {
@@ -29,14 +27,11 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
       }),
     });
 
-    console.log(authResponse)
     const authData = await authResponse.json();
-
 
     const token = authData.token;
     const url = `${endpoints.roteirizaRomaneioStockfy}?siglaEnt=${UNIDADE}`;
 
-    // Faz a requisição para a API externa usando a função fornecida
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -47,7 +42,6 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
 
     let text = await response.text();
 
-    // Corrige os valores numéricos de cep para strings no texto (com regex)
     text = text.replace(/"cep":(\d+)/g, (match: any, p1: any) => `"cep":"${p1}"`);
 
     let parsedData = JSON.parse(text);
@@ -57,7 +51,6 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     const ctesFiltrados = ctes.filter(cte => placasSalvas.includes(cte.placaVeiculo));
 
     for (const cte of ctesFiltrados) {
-
       await prisma.ctes.upsert({
         where: { chaveCTe: cte.chaveCTe },
         update: {},
@@ -115,14 +108,20 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
           },
           status: {
             connect: {
-              id: 1, // O ID do status que você deseja conectar
+              id: 1,
             },
           },
         },
       });
     }
-    
 
+    await prisma.log.create({
+      data:{
+        desc: `Foram inseridos ${ctesFiltrados.length} CTe(s) novos`,
+        tp: `AGENDADOR-${UNIDADE}`
+      }
+    })
+    
     console.log(`Foram inseridos ${ctesFiltrados.length} CTe(s) novos`);
   } catch (error) {
     console.log('Erro ao buscar e salvar CTe:', error);
