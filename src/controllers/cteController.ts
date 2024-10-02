@@ -97,7 +97,7 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
       const ctes = await prisma.ctes.findMany({
         where: {
           statusId: Number(status),
-          Unidade: unidade
+          Unidade: unidade.toUpperCase()
         },
         include: {
           motorista: true,    // Incluir dados do motorista
