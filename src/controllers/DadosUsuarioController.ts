@@ -52,6 +52,25 @@ export default function dadosUsuariosRoutes(fastify: FastifyInstance, prisma: Pr
     }
   });
 
+  fastify.post('/DadosUsuarioByTp', async (request, reply) => {
+    try {
+      const { tpDados } = request.body as { tpDados: string };
+      const dadosUsuario = await prisma.dadosUsuario.findUnique({ where: {  tpDados } });
+      if (dadosUsuario) {
+        reply.send(dadosUsuario);
+      } else {
+        reply.code(404).send({ error: 'Dados do usuário não encontrados' });
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        reply.code(500).send({ error: error.message });
+      } else {
+        reply.code(500).send({ error: 'Erro desconhecido' });
+      }
+    }
+  });
+
+
   // Atualizar um Dado do Usuário
   fastify.put('/DadosUsuario/:id', async (request, reply) => {
     try {

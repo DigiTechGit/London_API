@@ -100,6 +100,6 @@ model Unidade {
 
 model DadosUsuario {
   id      String @id @default(uuid())
-  tpDados String
+  tpDados String @unique
   vlDados String
 }
