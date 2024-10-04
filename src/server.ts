@@ -41,16 +41,30 @@ fastify.get('/', async (request, reply) => {
 });
 
 
-cron.schedule('*/5 * * * *', async () => {
+cron.schedule('*/1 * * * *', async () => {
   if (jobRunning) {
     console.log('O job já está em execução. Ignorando nova execução.');
     return;
   }
 
   try {
+    const unidades = await prisma.unidade.findMany({
+      where: {
+        idAtivo: true, // Somente as unidades ativas
+      },
+    });
     jobRunning = true; 
     console.log('Iniciando job de busca de CTe...');
-    await buscarEInserirCtesRecorrente("CTA"); 
+
+  const promessas = unidades.map(unidade => {
+    console.log(`Iniciando processamento da unidade: ${unidade.Unidade}`);
+    return buscarEInserirCtesRecorrente(unidade.Unidade);
+  });
+
+  // Executar todas as promessas em paralelo
+  await Promise.all(promessas);
+  console.log('Job de busca de CTe concluído.');
+
   } catch (error) {
     console.error('Erro ao executar o job:', error);
   } finally {

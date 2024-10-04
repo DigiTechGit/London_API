@@ -6,6 +6,8 @@ const prisma = new PrismaClient();
 
 export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
   try {
+    const camposNecessarios = ['username', 'password', 'cnpj_edi', 'domain'];
+
     const motoristasSalvos = await prisma.motorista.findMany({
       select: {
         placa: true,
@@ -13,19 +15,38 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     });
 
     const placasSalvas = motoristasSalvos.map(motorista => motorista.placa);
+    const dados = await prisma.dadosUsuario.findMany({
+      where: {
+        tpDados: {
+          in: camposNecessarios,
+        },
+      },
+    });
 
+    const authDados: Record<string, string> = {};
+    dados.forEach((dado) => {
+      authDados[dado.tpDados] = dado.vlDados;
+    });
+  
+    const camposFaltantes = camposNecessarios.filter(campo => !(campo in authDados));
+
+    if (camposFaltantes.length > 0) {
+      console.log(`Os seguintes campos estão faltando: ${camposFaltantes.join(', ')}`);
+      return
+    }
     const authResponse = await fetch(endpoints.generateToken, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        domain: 'RED',
-        username: 'emerson',
-        password: 'emerson2',
-        cnpj_edi: '27221173000358',
+        domain: authDados['domain'],
+        username: authDados['username'],
+        password: authDados['password'],
+        cnpj_edi: authDados['cnpj_edi'],
       }),
     });
+  
 
     const authData = await authResponse.json();
 
