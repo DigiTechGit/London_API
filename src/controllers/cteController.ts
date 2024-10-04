@@ -120,6 +120,24 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
     }
   });
 
+  fastify.put('/CTES/:id', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { status } = request.body as { status: string };
+      const ctes = await prisma.ctes.update({
+        where: { chaveCTe: id },
+        data: { statusId: parseInt(status) },
+      });
+      reply.send(ctes);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        reply.code(500).send({ error: error.message });
+      } else {
+        reply.code(500).send({ error: 'Erro desconhecido' });
+      }
+    }
+  });
+
   fastify.get('/LOG', async (request, reply) => {
     try {
 		  const { tpLog } = request.query as { tpLog: string }; // Alterado para query
