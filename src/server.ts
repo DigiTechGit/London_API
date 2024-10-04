@@ -9,6 +9,8 @@ import circuitController from './controllers/circuitController';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
 import { buscarEInserirCtesRecorrente } from './services/cteService';
+import unidadeRoutes from './controllers/UnidadeController';
+import dadosUsuariosRoutes from './controllers/DadosUsuarioController';
 let jobRunning = false; 
 
 dotenv.config();
@@ -29,6 +31,8 @@ statusRoutes(fastify);
 motoristaRoutes(fastify, prisma);
 cteRoutes(fastify, prisma);
 userRoutes(fastify, prisma);
+unidadeRoutes(fastify, prisma)
+dadosUsuariosRoutes(fastify, prisma)
 RouteRomaneioStockfy(fastify, prisma);
 circuitController(fastify);
 

@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { CTeRequestBody } from '../interfaces/CTeRequestBody';
+import { endOfDay, startOfDay } from 'date-fns';
 
 export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient) {
   fastify.post<{ Body: CTeRequestBody }>('/ctes', async (request, reply) => {
@@ -92,10 +93,17 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
     try {
 		  const { status, unidade } = request.query as { status: number, unidade: string }; // Alterado para query
 
+      const todayStart = startOfDay(new Date());
+      const todayEnd = endOfDay(new Date());
+
       const ctes = await prisma.ctes.findMany({
         where: {
           statusId: Number(status),
-          Unidade: unidade.toUpperCase()
+          Unidade: unidade.toUpperCase(),
+          createdAt: {
+            gte: todayStart,
+            lte: todayEnd,
+          },
         },
         include: {
           motorista: true,    // Incluir dados do motorista

@@ -90,3 +90,16 @@ model log {
   desc      String
   tp        String
 }
+
+model Unidade {
+  id      String  @id @default(uuid())
+  Unidade String
+  idAtivo Boolean
+  desc    String?
+}
+
+model DadosUsuario {
+  id      String @id @default(uuid())
+  tpDados String
+  vlDados String
+}
