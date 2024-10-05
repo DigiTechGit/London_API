@@ -148,4 +148,17 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
       reply.status(500).send({ error: 'Failed to list CTe' });
     }
   });
+
+  fastify.delete('/CTES', async (request, reply) => {
+    try {
+      await prisma.ctes.deleteMany();
+      reply.code(204).send();
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        reply.code(500).send({ error: error.message });
+      } else {
+        reply.code(500).send({ error: 'Erro desconhecido' });
+      }
+    }
+  });
 }

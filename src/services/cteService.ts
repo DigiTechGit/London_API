@@ -7,7 +7,25 @@ const prisma = new PrismaClient();
 export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
   try {
     const camposNecessarios = ['username', 'password', 'cnpj_edi', 'domain'];
+    const ultimoLog = await prisma.log.findFirst({
+      orderBy: {
+        createdAt: 'desc', // Ordenar pelo campo de data de criação
+      },
+    });
+    if (ultimoLog) {
+      const hoje = new Date();
+    
+      const ultimoLogDate = new Date(ultimoLog.createdAt);
+      ultimoLogDate.setHours(0, 0, 0, 0);
+      const ontem = new Date(hoje);
+      ontem.setDate(hoje.getDate() - 1); 
+      ontem.setHours(0, 0, 0, 0); 
 
+      if (ultimoLogDate.getTime() === ontem.getTime()) {
+        await prisma.ctes.deleteMany();
+        console.log('Tabela cte apagada.');
+      }
+    }
     const motoristasSalvos = await prisma.motorista.findMany({
       select: {
         placa: true,
