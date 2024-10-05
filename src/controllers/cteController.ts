@@ -112,12 +112,11 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
     }
   });
 
-  fastify.put('/CTES/:id', async (request, reply) => {
+  fastify.put('/CTES', async (request, reply) => {
     try {
-      const { id } = request.params as { id: string };
-      const { status } = request.body as { status: string };
+      const { status, id } = request.body as { status: string, id: number };
       const ctes = await prisma.ctes.update({
-        where: { chaveCTe: id },
+        where: { id },
         data: { statusId: parseInt(status) },
       });
       reply.send(ctes);

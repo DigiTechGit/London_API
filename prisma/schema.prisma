@@ -20,7 +20,8 @@ model Motorista {
 
 model Ctes {
   id              Int     @id @default(autoincrement())
-  chaveCTe        String  @unique
+  chaveCTe        String
+  nroCTRC         Int?
   valorFrete      Float
   placaVeiculo    String
   previsaoEntrega String

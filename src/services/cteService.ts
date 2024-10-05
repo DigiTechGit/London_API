@@ -92,69 +92,84 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
       ctesFiltrados = ctes.filter(cte => placasSalvas.includes(cte.placaVeiculo));
 
       for (const cte of ctesFiltrados) {
-        await prisma.ctes.upsert({
-          where: { chaveCTe: cte.chaveCTe },
-          update: {},
-          create: {
+        const existingCTe = await prisma.ctes.findFirst({
+          where: {
             chaveCTe: cte.chaveCTe,
-            Unidade: UNIDADE,
-            valorFrete: cte.valorFrete,
-            placaVeiculo: cte.placaVeiculo,
-            previsaoEntrega: cte.previsaoEntrega,
-            motorista: { 
-              connectOrCreate: {
-                where: { cpf: cte.cpfMotorista },
-                create: { 
-                  cpf: cte.cpfMotorista, 
-                  nome: cte.nomeMotorista,
-                }
-              },
-            },
-            remetente: {
-              connectOrCreate: {
-                where: { cnpjCPF: cte.remetente.cnpjCPF },
-                create: {
-                  cnpjCPF: cte.remetente.cnpjCPF,
-                  nome: cte.remetente.nome,
-                  tipo: cte.remetente.tipo,
-                },
-              },
-            },
-            destinatario: {
-              connectOrCreate: {
-                where: { cnpjCPF: cte.destinatario.cnpjCPF },
-                create: {
-                  cnpjCPF: cte.destinatario.cnpjCPF,
-                  nome: cte.destinatario.nome,
-                  tipo: cte.destinatario.tipo,
-                },
-              },
-            },
-            recebedor: {
-              connectOrCreate: {
-                where: { cnpjCPF: cte.recebedor.cnpjCPF },
-                create: {
-                  cnpjCPF: cte.recebedor.cnpjCPF,
-                  nome: cte.recebedor.nome,
-                  tipo: cte.recebedor.tipo,
-                  endereco: cte.recebedor.endereco,
-                  numero: cte.recebedor.numero,
-                  bairro: cte.recebedor.bairro,
-                  cep: cte.recebedor.cep,
-                  cidade: cte.recebedor.cidade,
-                  uf: cte.recebedor.uf,
-                  foneContato: cte.recebedor.foneContato,
-                },
-              },
-            },
-            status: {
-              connect: {
-                id: 1,
-              },
-            },
+            nroCTRC: cte.nroCTRC,
           },
         });
+      
+        if (existingCTe) {
+          await prisma.ctes.update({
+            where: { id: existingCTe.id },
+            data: {
+            },
+          });
+        } else {
+          await prisma.ctes.create({
+            data: {
+              chaveCTe: cte.chaveCTe,
+              Unidade: UNIDADE,
+              nroCTRC: cte.nroCTRC,
+              valorFrete: cte.valorFrete,
+              placaVeiculo: cte.placaVeiculo,
+              previsaoEntrega: cte.previsaoEntrega,
+              motorista: {
+                connectOrCreate: {
+                  where: { cpf: cte.cpfMotorista },
+                  create: {
+                    cpf: cte.cpfMotorista,
+                    nome: cte.nomeMotorista,
+                  },
+                },
+              },
+              remetente: {
+                connectOrCreate: {
+                  where: { cnpjCPF: cte.remetente.cnpjCPF },
+                  create: {
+                    cnpjCPF: cte.remetente.cnpjCPF,
+                    nome: cte.remetente.nome,
+                    tipo: cte.remetente.tipo,
+                  },
+                },
+              },
+              destinatario: {
+                connectOrCreate: {
+                  where: { cnpjCPF: cte.destinatario.cnpjCPF },
+                  create: {
+                    cnpjCPF: cte.destinatario.cnpjCPF,
+                    nome: cte.destinatario.nome,
+                    tipo: cte.destinatario.tipo,
+                  },
+                },
+              },
+              recebedor: {
+                connectOrCreate: {
+                  where: { cnpjCPF: cte.recebedor.cnpjCPF },
+                  create: {
+                    cnpjCPF: cte.recebedor.cnpjCPF,
+                    nome: cte.recebedor.nome,
+                    tipo: cte.recebedor.tipo,
+                    endereco: cte.recebedor.endereco,
+                    numero: cte.recebedor.numero,
+                    bairro: cte.recebedor.bairro,
+                    cep: cte.recebedor.cep,
+                    cidade: cte.recebedor.cidade,
+                    uf: cte.recebedor.uf,
+                    foneContato: cte.recebedor.foneContato,
+                  },
+                },
+              },
+              status: {
+                connect: {
+                  id: 1,
+                },
+              },
+            },
+          });
+        }
       }
+      
     }
 
     await prisma.log.create({
