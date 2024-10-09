@@ -4,6 +4,10 @@ import { Cte } from '../types/cte';
 
 const prisma = new PrismaClient();
 
+export async function LimparCTE() {
+  await prisma.ctes.deleteMany();
+}
+
 export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
   try {
     const camposNecessarios = ['username', 'password', 'cnpj_edi', 'domain'];
@@ -12,20 +16,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
         createdAt: 'desc', // Ordenar pelo campo de data de criação
       },
     });
-    if (ultimoLog) {
-      const hoje = new Date();
     
-      const ultimoLogDate = new Date(ultimoLog.createdAt);
-      ultimoLogDate.setHours(0, 0, 0, 0);
-      const ontem = new Date(hoje);
-      ontem.setDate(hoje.getDate() - 1); 
-      ontem.setHours(0, 0, 0, 0); 
-
-      if (ultimoLogDate.getTime() === ontem.getTime()) {
-        await prisma.ctes.deleteMany();
-        console.log('Tabela cte apagada.');
-      }
-    }
     const motoristasSalvos = await prisma.motorista.findMany({
       select: {
         placa: true,
@@ -45,7 +36,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     dados.forEach((dado) => {
       authDados[dado.tpDados] = dado.vlDados;
     });
-  
+
     const camposFaltantes = camposNecessarios.filter(campo => !(campo in authDados));
 
     if (camposFaltantes.length > 0) {
@@ -64,7 +55,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
         cnpj_edi: authDados['cnpj_edi'],
       }),
     });
-  
+
 
     const authData = await authResponse.json();
 
@@ -98,7 +89,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
             nroCTRC: cte.nroCTRC,
           },
         });
-      
+
         if (existingCTe) {
           await prisma.ctes.update({
             where: { id: existingCTe.id },
@@ -169,16 +160,16 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
           });
         }
       }
-      
+
     }
 
     await prisma.log.create({
-      data:{
+      data: {
         desc: `Foram inseridos ${ctesFiltrados.length} CTe(s) novos`,
         tp: `AGENDADOR-${UNIDADE}`
       }
     })
-    
+
     console.log(`Foram inseridos ${ctesFiltrados.length} CTe(s) novos`);
   } catch (error) {
     console.log('Erro ao buscar e salvar CTe:', error);
