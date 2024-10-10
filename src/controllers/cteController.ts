@@ -90,12 +90,39 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
 
   fastify.get('/quantidadeCtesPorStatusEUnidade', async (request, reply) => {
     try {
-		  const { status, unidade } = request.query as { status: number, unidade: string }; // Alterado para query
+      const { status, unidade } = request.query as { status: number, unidade: string }; // Alterado para query
+  
+      let filtroData = {};
+      if (Number(status) === 1) {
+        const ultimoLog = await prisma.log.findFirst({
+          where: {
+            tp: `AGENDADOR-${unidade.toUpperCase()}`,
+          },
+          orderBy: {
+            createdAt: 'desc', // Pegar o log mais recente
+          },
+        });
 
+        
+  
+        if (ultimoLog && ultimoLog.createdAt) {
+          const dtAlteracaoComMinutos = new Date(ultimoLog.createdAt);
+          dtAlteracaoComMinutos.setMinutes(dtAlteracaoComMinutos.getMinutes());
+          // Adicionar o filtro de data baseado no último log
+          filtroData = {
+            dt_alteracao: {
+              gte: dtAlteracaoComMinutos, // Filtra os registros que foram alterados a partir do último log
+            },
+          };
+        }
+      }
+  
+      // Buscar os CTe's com base nos filtros
       const ctes = await prisma.ctes.findMany({
         where: {
           statusId: Number(status),
-          Unidade: unidade.toUpperCase()
+          Unidade: unidade.toUpperCase(),
+          ...filtroData, // Incluir o filtro de data se o status for 1
         },
         include: {
           motorista: true,    // Incluir dados do motorista
@@ -105,13 +132,13 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
           status: true        // Incluir dados do status
         }
       });
-
+  
       reply.status(200).send(ctes);
     } catch (error) {
       reply.status(500).send({ error: 'Failed to list CTe' });
     }
   });
-
+  
   fastify.put('/CTES', async (request, reply) => {
     try {
       const { status, id } = request.body as { status: string, id: number };

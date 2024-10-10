@@ -8,7 +8,7 @@ import statusRoutes from './controllers/statusController';
 import circuitController from './controllers/circuitController';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
-import { buscarEInserirCtesRecorrente, LimparCTE } from './services/cteService';
+import { buscarEInserirCtesRecorrente } from './services/cteService';
 import unidadeRoutes from './controllers/UnidadeController';
 import dadosUsuariosRoutes from './controllers/DadosUsuarioController';
 let jobRunning = false; 
@@ -40,11 +40,8 @@ fastify.get('/', async (request, reply) => {
   reply.send({ status: 'Servidor rodando corretamente' });
 });
 
-cron.schedule('0 4 * * *', async () => {
-  LimparCTE()
-})
 
-cron.schedule('*/1 6-23 * * *', async () => {
+cron.schedule('*/1 4-23 * * *', async () => {
   if (jobRunning) {
     console.log('O job já está em execução. Ignorando nova execução.');
     return;

@@ -33,6 +33,7 @@ model Ctes {
   statusId        Int
 
   createdAt    DateTime      @default(now()) // Campo para registrar a data de criação
+  dt_alteracao DateTime      @default(now()) // Campo para registrar a data de alteracao
   motorista    Motorista_ssw @relation(fields: [motoristaId], references: [id])
   remetente    Remetente     @relation(fields: [remetenteId], references: [id])
   destinatario Destinatario  @relation(fields: [destinatarioId], references: [id])

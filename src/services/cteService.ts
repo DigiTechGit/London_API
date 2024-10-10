@@ -4,19 +4,10 @@ import { Cte } from '../types/cte';
 
 const prisma = new PrismaClient();
 
-export async function LimparCTE() {
-  await prisma.ctes.deleteMany();
-}
-
 export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
   try {
     const camposNecessarios = ['username', 'password', 'cnpj_edi', 'domain'];
-    const ultimoLog = await prisma.log.findFirst({
-      orderBy: {
-        createdAt: 'desc', // Ordenar pelo campo de data de criação
-      },
-    });
-    
+
     const motoristasSalvos = await prisma.motorista.findMany({
       select: {
         placa: true,
@@ -79,9 +70,13 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     const ctes: Cte[] = parsedData?.ctes ?? [];
 
     let ctesFiltrados = [];
+
+    let criados = 0;  
+    let atualizados = 0;
+    const dt_alteracao = new Date();
+
     if (ctes.length > 0) {
       ctesFiltrados = ctes.filter(cte => placasSalvas.includes(cte.placaVeiculo));
-
       for (const cte of ctesFiltrados) {
         const existingCTe = await prisma.ctes.findFirst({
           where: {
@@ -93,9 +88,9 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
         if (existingCTe) {
           await prisma.ctes.update({
             where: { id: existingCTe.id },
-            data: {
-            },
+            data: {dt_alteracao },
           });
+          atualizados++;
         } else {
           await prisma.ctes.create({
             data: {
@@ -103,6 +98,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
               Unidade: UNIDADE,
               nroCTRC: cte.nroCTRC,
               valorFrete: cte.valorFrete,
+              dt_alteracao: dt_alteracao,
               placaVeiculo: cte.placaVeiculo,
               previsaoEntrega: cte.previsaoEntrega,
               motorista: {
@@ -158,6 +154,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
               },
             },
           });
+          criados++;
         }
       }
 
@@ -165,12 +162,13 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
 
     await prisma.log.create({
       data: {
-        desc: `Foram inseridos ${ctesFiltrados.length} CTe(s) novos`,
-        tp: `AGENDADOR-${UNIDADE}`
+        desc: `Foram inseridos ${criados} CTe(s) novos e atualizados ${atualizados} CTe(s) existentes`,
+        tp: `AGENDADOR-${UNIDADE}`,
+        createdAt: dt_alteracao
       }
     })
 
-    console.log(`Foram inseridos ${ctesFiltrados.length} CTe(s) novos`);
+    console.log(`Foram inseridos ${criados} CTe(s) novos e atualizados ${atualizados} CTe(s) existentes`);
   } catch (error) {
     console.log('Erro ao buscar e salvar CTe:', error);
   }
