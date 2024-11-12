@@ -1,9 +1,12 @@
-import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
-import { CTeRequestBody } from '../interfaces/CTeRequestBody';
+import { FastifyInstance } from "fastify";
+import { PrismaClient } from "@prisma/client";
+import { CTeRequestBody } from "../interfaces/CTeRequestBody";
 
-export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient) {
-  fastify.post<{ Body: CTeRequestBody }>('/ctes', async (request, reply) => {
+export default function cteRoutes(
+  fastify: FastifyInstance,
+  prisma: PrismaClient,
+) {
+  fastify.post<{ Body: CTeRequestBody }>("/ctes", async (request, reply) => {
     const {
       chaveCTe,
       valorFrete,
@@ -13,7 +16,7 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
       previsaoEntrega,
       remetente,
       destinatario,
-      recebedor, 
+      recebedor,
     } = request.body;
 
     try {
@@ -23,8 +26,8 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
         update: {},
         create: {
           nome: nomeMotorista,
-          cpf: cpfMotorista
-        }
+          cpf: cpfMotorista,
+        },
       });
 
       // Criar ou encontrar o remetente
@@ -34,8 +37,8 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
         create: {
           cnpjCPF: remetente.cnpjCPF,
           tipo: remetente.tipo,
-          nome: remetente.nome
-        }
+          nome: remetente.nome,
+        },
       });
 
       // Criar ou encontrar o destinatário
@@ -45,8 +48,8 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
         create: {
           cnpjCPF: destinatario.cnpjCPF,
           tipo: destinatario.tipo,
-          nome: destinatario.nome
-        }
+          nome: destinatario.nome,
+        },
       });
 
       // Criar ou encontrar o recebedor
@@ -63,8 +66,8 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
           cep: recebedor.cep,
           cidade: recebedor.cidade,
           uf: recebedor.uf,
-          foneContato: recebedor.foneContato
-        }
+          foneContato: recebedor.foneContato,
+        },
       });
 
       // Criar o CTe com o status
@@ -78,71 +81,66 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
           remetenteId: remetenteEntity.id,
           destinatarioId: destinatarioEntity.id,
           recebedorId: recebedorEntity.id,
-          statusId: 1 
-        }
+          statusId: 1,
+        },
       });
 
       reply.status(201).send(cte);
     } catch (error) {
-      reply.status(500).send({ error: 'Failed to create CTe' });
+      reply.status(500).send({ error: "Failed to create CTe" });
     }
   });
 
-  fastify.get('/quantidadeCtesPorStatusEUnidade', async (request, reply) => {
+  fastify.get("/quantidadeCtesPorStatusEUnidade", async (request, reply) => {
     try {
-      const { status, unidade } = request.query as { status: number, unidade: string }; // Alterado para query
-  
-      let filtroData = {};
-      if (Number(status) === 1) {
-        const ultimoLog = await prisma.log.findFirst({
-          where: {
-            tp: `AGENDADOR-${unidade.toUpperCase()}`,
-          },
-          orderBy: {
-            createdAt: 'desc', // Pegar o log mais recente
-          },
-        });
+      const { unidade } = request.query as { unidade: string }; // Alterado para query
 
-        
-  
-        if (ultimoLog && ultimoLog.createdAt) {
-          const dtAlteracaoComMinutos = new Date(ultimoLog.createdAt);
-          dtAlteracaoComMinutos.setMinutes(dtAlteracaoComMinutos.getMinutes());
-          // Adicionar o filtro de data baseado no último log
-          filtroData = {
-            dt_alteracao: {
-              gte: dtAlteracaoComMinutos, // Filtra os registros que foram alterados a partir do último log
-            },
-          };
-        }
+      let filtroData = {};
+      const ultimoLog = await prisma.log.findFirst({
+        where: {
+          tp: `AGENDADOR-${unidade.toUpperCase()}`,
+        },
+        orderBy: {
+          createdAt: "desc", // Pegar o log mais recente
+        },
+      });
+
+      if (ultimoLog && ultimoLog.createdAt) {
+        const dtAlteracaoComMinutos = new Date(ultimoLog.createdAt);
+        dtAlteracaoComMinutos.setMinutes(dtAlteracaoComMinutos.getMinutes());
+        // Adicionar o filtro de data baseado no último log
+        filtroData = {
+          dt_alteracao: {
+            gte: dtAlteracaoComMinutos, // Filtra os registros que foram alterados a partir do último log
+          },
+        };
       }
-  
+
       // Buscar os CTe's com base nos filtros
       const ctes = await prisma.ctes.findMany({
         where: {
           codUltOco: 85,
-          statusId: Number(status),
           Unidade: unidade.toUpperCase(),
           ...filtroData, // Incluir o filtro de data se o status for 1
         },
         include: {
-          motorista: true,    // Incluir dados do motorista
-          remetente: true,    // Incluir dados do remetente
+          motorista: true, // Incluir dados do motorista
+          remetente: true, // Incluir dados do remetente
           destinatario: true, // Incluir dados do destinatário
-          recebedor: true,    // Incluir dados do recebedor
-          status: true        // Incluir dados do status
-        }
+          recebedor: true, // Incluir dados do recebedor
+          status: true, // Incluir dados do status
+        },
       });
-  
+
       reply.status(200).send(ctes);
     } catch (error) {
-      reply.status(500).send({ error: 'Failed to list CTe' });
+      reply.status(500).send({ error: "Failed to list CTe" });
     }
   });
-  
-  fastify.put('/CTES', async (request, reply) => {
+
+  fastify.put("/CTES", async (request, reply) => {
     try {
-      const { status, id } = request.body as { status: string, id: number };
+      const { status, id } = request.body as { status: string; id: number };
       const ctes = await prisma.ctes.update({
         where: { id },
         data: { statusId: parseInt(status) },
@@ -152,31 +150,31 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
       if (error instanceof Error) {
         reply.code(500).send({ error: error.message });
       } else {
-        reply.code(500).send({ error: 'Erro desconhecido' });
+        reply.code(500).send({ error: "Erro desconhecido" });
       }
     }
   });
 
-  fastify.get('/LOG', async (request, reply) => {
+  fastify.get("/LOG", async (request, reply) => {
     try {
-		  const { tpLog } = request.query as { tpLog: string }; // Alterado para query
+      const { tpLog } = request.query as { tpLog: string }; // Alterado para query
 
       const log = await prisma.log.findFirst({
         where: {
           tp: tpLog.toUpperCase(),
         },
         orderBy: {
-          createdAt: 'desc', 
+          createdAt: "desc",
         },
       });
-      
+
       reply.status(200).send(log);
     } catch (error) {
-      reply.status(500).send({ error: 'Failed to list CTe' });
+      reply.status(500).send({ error: "Failed to list CTe" });
     }
   });
 
-  fastify.delete('/CTES', async (request, reply) => {
+  fastify.delete("/CTES", async (request, reply) => {
     try {
       await prisma.ctes.deleteMany();
       reply.code(204).send();
@@ -184,7 +182,7 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
       if (error instanceof Error) {
         reply.code(500).send({ error: error.message });
       } else {
-        reply.code(500).send({ error: 'Erro desconhecido' });
+        reply.code(500).send({ error: "Erro desconhecido" });
       }
     }
   });
