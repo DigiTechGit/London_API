@@ -31,6 +31,7 @@ model Ctes {
   destinatarioId  Int
   recebedorId     Int
   statusId        Int
+  codUltOco       Int     @default(0)
 
   createdAt    DateTime      @default(now()) // Campo para registrar a data de criação
   dt_alteracao DateTime      @default(now()) // Campo para registrar a data de alteracao

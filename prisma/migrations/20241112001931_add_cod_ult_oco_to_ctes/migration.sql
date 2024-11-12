@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Ctes" ADD COLUMN     "codUltOco" INTEGER NOT NULL DEFAULT 0;

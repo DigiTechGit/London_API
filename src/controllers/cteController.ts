@@ -120,6 +120,7 @@ export default function cteRoutes(fastify: FastifyInstance, prisma: PrismaClient
       // Buscar os CTe's com base nos filtros
       const ctes = await prisma.ctes.findMany({
         where: {
+          codUltOco: 85,
           statusId: Number(status),
           Unidade: unidade.toUpperCase(),
           ...filtroData, // Incluir o filtro de data se o status for 1
