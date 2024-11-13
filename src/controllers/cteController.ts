@@ -186,4 +186,33 @@ export default function cteRoutes(
       }
     }
   });
+
+  // rota para atualizar status dos cte's
+  fastify.put(
+    "/cte/status",
+    async (request, reply) => {
+      const { status, chaveCTe, nroCTRC } = request.body as { status: number; chaveCTe: string, nroCTRC: number | null }
+
+      try {
+        const existingCTe = await prisma.ctes.findFirst({
+          where: {
+            chaveCTe: chaveCTe,
+            nroCTRC: nroCTRC,
+          },
+        });
+
+        if (existingCTe) {
+          await prisma.ctes.update({
+            where: { id: existingCTe.id },
+            data: { statusId: status },
+          });
+        }
+
+        reply.status(204).send();
+      } catch (error) {
+        reply.status(500).send({ error: "Failed to update CTe" });
+      }
+    },
+  );
+  
 }

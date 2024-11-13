@@ -76,7 +76,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     const dt_alteracao = new Date();
 
     if (ctes.length > 0) {
-      ctesFiltrados = ctes.filter(cte => placasSalvas.includes(cte.placaVeiculo));
+      ctesFiltrados = ctes;
       for (const cte of ctesFiltrados) {
         const existingCTe = await prisma.ctes.findFirst({
           where: {
