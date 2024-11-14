@@ -98,7 +98,6 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
               Unidade: UNIDADE,
               nroCTRC: cte.nroCTRC,
               valorFrete: cte.valorFrete,
-              dt_alteracao: dt_alteracao,
               placaVeiculo: cte.placaVeiculo,
               previsaoEntrega: cte.previsaoEntrega,
               codUltOco: cte.codUltOco,
