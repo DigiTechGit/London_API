@@ -93,9 +93,9 @@ export default function cteRoutes(
 
   fastify.get("/quantidadeCtesPorStatusEUnidade", async (request, reply) => {
     try {
-      const { unidade } = request.query as { unidade: string }; // Alterado para query
-
+      const { unidade } = request.query as { unidade: string };
       let filtroData = {};
+  
       const ultimoLog = await prisma.log.findFirst({
         where: {
           tp: `AGENDADOR-${unidade.toUpperCase()}`,
@@ -104,7 +104,7 @@ export default function cteRoutes(
           createdAt: "desc",
         },
       });
-
+  
       if (ultimoLog && ultimoLog.createdAt) {
         const dtAlteracaoComMinutos = new Date(ultimoLog.createdAt);
         dtAlteracaoComMinutos.setMinutes(dtAlteracaoComMinutos.getMinutes());
@@ -115,28 +115,33 @@ export default function cteRoutes(
           },
         };
       }
-
+  
       // Buscar os CTe's com base nos filtros
       const ctes = await prisma.ctes.findMany({
         where: {
           codUltOco: 85,
           Unidade: unidade.toUpperCase(),
-          ...filtroData, // Incluir o filtro de data se o status for 1
+          ...filtroData,
         },
         include: {
-          motorista: true, // Incluir dados do motorista
-          remetente: true, // Incluir dados do remetente
-          destinatario: true, // Incluir dados do destinatário
-          recebedor: true, // Incluir dados do recebedor
-          status: true, // Incluir dados do status
+          motorista: true,
+          remetente: true,
+          destinatario: true,
+          recebedor: true,
+          status: true,
         },
       });
+  
+      // Enriquecer os dados com a verificação na tabela CNPJ
 
+  
       reply.status(200).send(ctes);
     } catch (error) {
+      console.error(error);
       reply.status(500).send({ error: "Failed to list CTe" });
     }
   });
+  
 
   fastify.put("/CTES", async (request, reply) => {
     try {
