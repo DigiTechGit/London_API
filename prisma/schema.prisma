@@ -101,6 +101,13 @@ model Unidade {
   desc    String?
 }
 
+model CNPJ {
+  id      String  @id @default(uuid())
+  CNPJ    String
+  idAtivo Boolean
+  desc    String?
+}
+
 model DadosUsuario {
   id      String @id @default(uuid())
   tpDados String @unique
