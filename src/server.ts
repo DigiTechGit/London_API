@@ -11,6 +11,7 @@ import cron from 'node-cron';
 import { buscarEInserirCtesRecorrente } from './services/cteService';
 import unidadeRoutes from './controllers/UnidadeController';
 import dadosUsuariosRoutes from './controllers/DadosUsuarioController';
+import CNPJRoutes from './controllers/CnpjCorreiosController';
 let jobRunning = false; 
 
 dotenv.config();
@@ -35,6 +36,7 @@ unidadeRoutes(fastify, prisma)
 dadosUsuariosRoutes(fastify, prisma)
 RouteRomaneioStockfy(fastify, prisma);
 circuitController(fastify);
+CNPJRoutes(fastify, prisma);
 
 fastify.get('/', async (request, reply) => {
   reply.send({ status: 'Servidor rodando corretamente' });
