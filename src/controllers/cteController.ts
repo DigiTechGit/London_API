@@ -142,9 +142,25 @@ export default function cteRoutes(
         },
       });
 
-      // Enriquecer os dados com a verificação na tabela CNPJ
 
-      reply.status(200).send(ctes);
+      const ctesEnriched = await Promise.all(
+        ctes.map(async (cte) => {
+          const remetenteCNPJ = cte.remetente?.cnpjCPF; 
+          const cnpjExists = await prisma.cnpjTb.findFirst({
+            where: {
+              CNPJ: remetenteCNPJ,
+            },
+          });
+  
+          return {
+            ...cte,
+            cnpjCorreios: !!cnpjExists, 
+          };
+        })
+      );
+
+
+      reply.status(200).send(ctesEnriched);
     } catch (error) {
       console.error(error);
       reply.status(500).send({ error: "Failed to list CTe" });
