@@ -12,7 +12,10 @@ import { buscarEInserirCtesRecorrente } from './services/cteService';
 import unidadeRoutes from './controllers/UnidadeController';
 import dadosUsuariosRoutes from './controllers/DadosUsuarioController';
 import CNPJRoutes from './controllers/CnpjCorreiosController';
+import RelatorioRoutes from './controllers/RelatorioController';
+import { AtualizarCtesRecorrente } from './services/RelatorioService';
 let jobRunning = false; 
+let jobRunningAtualizar = false; 
 
 dotenv.config();
 
@@ -37,11 +40,34 @@ dadosUsuariosRoutes(fastify, prisma)
 RouteRomaneioStockfy(fastify, prisma);
 circuitController(fastify);
 CNPJRoutes(fastify, prisma);
+RelatorioRoutes(fastify, prisma)
 
 fastify.get('/', async (request, reply) => {
   reply.send({ status: 'Servidor rodando corretamente' });
 });
 
+
+
+cron.schedule('*/5 4-23 * * *', async () => {
+  if (jobRunningAtualizar) {
+    console.log('O job já está em execução. Ignorando nova execução.');
+    return;
+  }
+
+  try {
+    jobRunningAtualizar = true; 
+
+    await AtualizarCtesRecorrente(); 
+
+    console.log('Job de busca de CTe concluído.');
+
+  } catch (error) {
+    console.error('Erro ao executar o job:', error);
+  } finally {
+    jobRunningAtualizar = false; 
+    console.log('Job finalizado.');
+  }
+});
 
 cron.schedule('*/1 4-23 * * *', async () => {
   if (jobRunning) {
