@@ -4,7 +4,7 @@ import { CTeRequestBody } from "../interfaces/CTeRequestBody";
 
 export default function cteRoutes(
   fastify: FastifyInstance,
-  prisma: PrismaClient,
+  prisma: PrismaClient
 ) {
   fastify.post<{ Body: CTeRequestBody }>("/ctes", async (request, reply) => {
     const {
@@ -95,7 +95,7 @@ export default function cteRoutes(
     try {
       const { unidade } = request.query as { unidade: string };
       let filtroData = {};
-  
+
       const ultimoLog = await prisma.log.findFirst({
         where: {
           tp: `AGENDADOR-${unidade.toUpperCase()}`,
@@ -104,7 +104,14 @@ export default function cteRoutes(
           createdAt: "desc",
         },
       });
-  
+
+      const motoristasSalvos = await prisma.motorista.findMany({
+        select: {
+          placa: true,
+        },
+      });
+      const placasSalvas = motoristasSalvos.map((motorista) => motorista.placa);
+
       if (ultimoLog && ultimoLog.createdAt) {
         const dtAlteracaoComMinutos = new Date(ultimoLog.createdAt);
         dtAlteracaoComMinutos.setMinutes(dtAlteracaoComMinutos.getMinutes());
@@ -115,11 +122,14 @@ export default function cteRoutes(
           },
         };
       }
-  
+
       // Buscar os CTe's com base nos filtros
       const ctes = await prisma.ctes.findMany({
         where: {
           codUltOco: 85,
+          placaVeiculo: {
+            in: placasSalvas, 
+          },
           Unidade: unidade.toUpperCase(),
           ...filtroData,
         },
@@ -131,17 +141,15 @@ export default function cteRoutes(
           status: true,
         },
       });
-  
+
       // Enriquecer os dados com a verificação na tabela CNPJ
 
-  
       reply.status(200).send(ctes);
     } catch (error) {
       console.error(error);
       reply.status(500).send({ error: "Failed to list CTe" });
     }
   });
-  
 
   fastify.put("/CTES", async (request, reply) => {
     try {
@@ -193,31 +201,31 @@ export default function cteRoutes(
   });
 
   // rota para atualizar status dos cte's
-  fastify.put(
-    "/cte/status",
-    async (request, reply) => {
-      const { status, chaveCTe, nroCTRC } = request.body as { status: number; chaveCTe: string, nroCTRC: number | null }
+  fastify.put("/cte/status", async (request, reply) => {
+    const { status, chaveCTe, nroCTRC } = request.body as {
+      status: number;
+      chaveCTe: string;
+      nroCTRC: number | null;
+    };
 
-      try {
-        const existingCTe = await prisma.ctes.findFirst({
-          where: {
-            chaveCTe: chaveCTe,
-            nroCTRC: nroCTRC,
-          },
+    try {
+      const existingCTe = await prisma.ctes.findFirst({
+        where: {
+          chaveCTe: chaveCTe,
+          nroCTRC: nroCTRC,
+        },
+      });
+
+      if (existingCTe) {
+        await prisma.ctes.update({
+          where: { id: existingCTe.id },
+          data: { statusId: status },
         });
-
-        if (existingCTe) {
-          await prisma.ctes.update({
-            where: { id: existingCTe.id },
-            data: { statusId: status },
-          });
-        }
-
-        reply.status(204).send();
-      } catch (error) {
-        reply.status(500).send({ error: "Failed to update CTe" });
       }
-    },
-  );
-  
+
+      reply.status(204).send();
+    } catch (error) {
+      reply.status(500).send({ error: "Failed to update CTe" });
+    }
+  });
 }

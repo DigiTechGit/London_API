@@ -8,13 +8,8 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
   try {
     const camposNecessarios = ['username', 'password', 'cnpj_edi', 'domain'];
 
-    const motoristasSalvos = await prisma.motorista.findMany({
-      select: {
-        placa: true,
-      },
-    });
 
-    const placasSalvas = motoristasSalvos.map(motorista => motorista.placa);
+
     const dados = await prisma.dadosUsuario.findMany({
       where: {
         tpDados: {
