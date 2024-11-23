@@ -50,7 +50,7 @@ fastify.get('/', async (request, reply) => {
 
 cron.schedule('*/5 4-23 * * *', async () => {
   if (jobRunningAtualizar) {
-    console.log('O job já está em execução. Ignorando nova execução.');
+    console.log('atualização. Ignorando nova execução.');
     return;
   }
 

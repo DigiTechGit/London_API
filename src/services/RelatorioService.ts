@@ -8,8 +8,6 @@ export async function AtualizarCtesRecorrente() {
   try {
     const camposNecessarios = ['username', 'password', 'cnpj_edi', 'domain'];
 
-
-
     const dados = await prisma.dadosUsuario.findMany({
       where: {
         tpDados: {
@@ -74,7 +72,7 @@ export async function AtualizarCtesRecorrente() {
     
             try {
               // Respeita o limite de 10 requisições por segundo
-              if (contador >= 15) {
+              if (contador >= 18) {
                 await delay(1000); // Pausa de 1 segundo
                 contador = 0; // Reseta o contador após a pausa
               }
