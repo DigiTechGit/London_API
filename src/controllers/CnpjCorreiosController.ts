@@ -6,7 +6,7 @@ export default function CNPJRoutes(fastify: FastifyInstance, prisma: PrismaClien
   fastify.post('/CNPJ', async (request, reply) => {
     try {
       const { CNPJ, idAtivo, desc } = request.body as { CNPJ: string, idAtivo: boolean, desc?: string };
-      const CNPJDATA = await prisma.cNPJ.create({
+      const CNPJDATA = await prisma.cnpjTb.create({
         data: { CNPJ, idAtivo, desc },
       });
       reply.code(201).send(CNPJDATA);
@@ -22,7 +22,7 @@ export default function CNPJRoutes(fastify: FastifyInstance, prisma: PrismaClien
   // Listar todas as CNPJs
   fastify.get('/CNPJ', async (request, reply) => {
     try {
-      const CNPJs = await prisma.cNPJ.findMany();
+      const CNPJs = await prisma.cnpjTb.findMany();
       reply.send(CNPJs);
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -37,7 +37,7 @@ export default function CNPJRoutes(fastify: FastifyInstance, prisma: PrismaClien
   fastify.get('/CNPJ/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const CNPJ = await prisma.cNPJ.findUnique({ where: { id } });
+      const CNPJ = await prisma.cnpjTb.findUnique({ where: { id } });
       if (CNPJ) {
         reply.send(CNPJ);
       } else {
@@ -57,7 +57,7 @@ export default function CNPJRoutes(fastify: FastifyInstance, prisma: PrismaClien
     try {
       const { id } = request.params as { id: string };
       const { CNPJ, idAtivo, desc } = request.body as { CNPJ: string, idAtivo: boolean, desc?: string };
-      const _CNPJ = await prisma.cNPJ.update({
+      const _CNPJ = await prisma.cnpjTb.update({
         where: { id },
         data: { CNPJ, idAtivo, desc },
       });
@@ -75,7 +75,7 @@ export default function CNPJRoutes(fastify: FastifyInstance, prisma: PrismaClien
   fastify.delete('/CNPJ/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      await prisma.cNPJ.delete({ where: { id } });
+      await prisma.cnpjTb.delete({ where: { id } });
       reply.code(204).send();
     } catch (error: unknown) {
       if (error instanceof Error) {
