@@ -40,6 +40,7 @@ model Ctes {
   destinatario Destinatario  @relation(fields: [destinatarioId], references: [id])
   recebedor    Recebedor     @relation(fields: [recebedorId], references: [id])
   status       StatusEnvio   @relation(fields: [statusId], references: [id]) // Relacionamento com status
+  NotaFiscal   NotaFiscal[]
 }
 
 model Motorista_ssw {
@@ -101,8 +102,30 @@ model Unidade {
   desc    String?
 }
 
+model CnpjTb {
+  id      String  @id @default(uuid())
+  CNPJ    String
+  idAtivo Boolean
+  desc    String?
+}
+
 model DadosUsuario {
   id      String @id @default(uuid())
   tpDados String @unique
   vlDados String
+}
+
+model NotaFiscal {
+  id              Int     @id @default(autoincrement())
+  chaveNFe        String?
+  serNF           String?
+  nroNF           Int
+  nroPedido       String?
+  qtdeVolumes     Int
+  pesoReal        Float
+  metragemCubica  Float
+  valorMercadoria Float
+
+  ctesId Int
+  ctes   Ctes @relation(fields: [ctesId], references: [id])
 }

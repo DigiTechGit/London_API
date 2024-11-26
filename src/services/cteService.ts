@@ -8,13 +8,8 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
   try {
     const camposNecessarios = ['username', 'password', 'cnpj_edi', 'domain'];
 
-    const motoristasSalvos = await prisma.motorista.findMany({
-      select: {
-        placa: true,
-      },
-    });
 
-    const placasSalvas = motoristasSalvos.map(motorista => motorista.placa);
+
     const dados = await prisma.dadosUsuario.findMany({
       where: {
         tpDados: {
@@ -76,7 +71,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     const dt_alteracao = new Date();
 
     if (ctes.length > 0) {
-      ctesFiltrados = ctes.filter(cte => placasSalvas.includes(cte.placaVeiculo));
+      ctesFiltrados = ctes;
       for (const cte of ctesFiltrados) {
         const existingCTe = await prisma.ctes.findFirst({
           where: {
@@ -98,7 +93,6 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
               Unidade: UNIDADE,
               nroCTRC: cte.nroCTRC,
               valorFrete: cte.valorFrete,
-              dt_alteracao: dt_alteracao,
               placaVeiculo: cte.placaVeiculo,
               previsaoEntrega: cte.previsaoEntrega,
               codUltOco: cte.codUltOco,
@@ -148,6 +142,18 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
                   },
                 },
               },
+              // NotaFiscal: {
+              //   create: cte.notasFiscais.map((nota) => ({
+              //     chaveNFe: nota.chave_nfe,
+              //     serNF: nota.serNF,
+              //     nroNF: nota.nroNF,
+              //     nroPedido: nota.nroPedido,
+              //     qtdeVolumes: nota.qtdeVolumes,
+              //     pesoReal: nota.pesoReal,
+              //     metragemCubica: nota.metragemCubica,
+              //     valorMercadoria: nota.valorMercadoria,
+              //   })),
+              // },
               status: {
                 connect: {
                   id: 1,
