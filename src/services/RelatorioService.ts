@@ -111,9 +111,6 @@ export async function AtualizarCtesRecorrente() {
                   data: { codUltOco: parseInt(numeroOcorrencia, 10) },
                 });
     
-                console.log(`CTE ${cte.id} atualizado com codUltOco ${numeroOcorrencia}`);
-              } else {
-                console.warn(`sem atualização ${nota.chaveNFe}`);
               }
             } catch (error) {
               console.error(`Erro na requisição para NF-e ${nota.chaveNFe}:`);
@@ -121,7 +118,6 @@ export async function AtualizarCtesRecorrente() {
           }
         } else {
           prisma.ctes.update({where: {id: cte.id}, data: {codUltOco: 0}})
-          console.warn(`Nenhuma nota fiscal encontrada para CTe ${cte.id}`);
         }
       }
     };
