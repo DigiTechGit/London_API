@@ -48,26 +48,26 @@ fastify.get('/', async (request, reply) => {
 
 
 
-cron.schedule('*/5 4-23 * * *', async () => {
-  if (jobRunningAtualizar) {
-    console.log('atualização. Ignorando nova execução.');
-    return;
-  }
+// cron.schedule('*/5 4-23 * * *', async () => {
+//   if (jobRunningAtualizar) {
+//     console.log('atualização. Ignorando nova execução.');
+//     return;
+//   }
 
-  try {
-    jobRunningAtualizar = true; 
+//   try {
+//     jobRunningAtualizar = true; 
 
-    await AtualizarCtesRecorrente(); 
+//     await AtualizarCtesRecorrente(); 
 
-    console.log('Job de busca de CTe concluído.');
+//     console.log('Job de busca de CTe concluído.');
 
-  } catch (error) {
-    console.error('Erro ao executar o job:', error);
-  } finally {
-    jobRunningAtualizar = false; 
-    console.log('Job finalizado.');
-  }
-});
+//   } catch (error) {
+//     console.error('Erro ao executar o job:', error);
+//   } finally {
+//     jobRunningAtualizar = false; 
+//     console.log('Job finalizado.');
+//   }
+// });
 
 cron.schedule('*/1 4-23 * * *', async () => {
   if (jobRunning) {
