@@ -3,7 +3,7 @@ name: Deploy to VM
 on:
   push:
     branches:
-      - main  
+      - master  
 
 jobs:
   deploy:
@@ -24,6 +24,6 @@ jobs:
       run: |
         ssh root@195.200.7.133 << 'EOF'
         cd /dados/london_romaneio/London_API 
-        git pull origin main
+        git pull origin master
         pm2 restart 0
         EOF
