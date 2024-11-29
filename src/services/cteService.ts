@@ -142,18 +142,18 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
                   },
                 },
               },
-              // NotaFiscal: {
-              //   create: cte.notasFiscais.map((nota) => ({
-              //     chaveNFe: nota.chave_nfe,
-              //     serNF: nota.serNF,
-              //     nroNF: nota.nroNF,
-              //     nroPedido: nota.nroPedido,
-              //     qtdeVolumes: nota.qtdeVolumes,
-              //     pesoReal: nota.pesoReal,
-              //     metragemCubica: nota.metragemCubica,
-              //     valorMercadoria: nota.valorMercadoria,
-              //   })),
-              // },
+               NotaFiscal: {
+                 create: cte.notasFiscais.map((nota) => ({
+                   chaveNFe: nota.chave_nfe,
+                   serNF: nota.serNF,
+                   nroNF: nota.nroNF,
+                   nroPedido: nota.nroPedido,
+                   qtdeVolumes: nota.qtdeVolumes,
+                   pesoReal: nota.pesoReal,
+                   metragemCubica: nota.metragemCubica,
+                   valorMercadoria: nota.valorMercadoria,
+                 })),
+               },
               status: {
                 connect: {
                   id: 1,

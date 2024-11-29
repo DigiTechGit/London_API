@@ -11,15 +11,20 @@ import cron from 'node-cron';
 import { buscarEInserirCtesRecorrente } from './services/cteService';
 import unidadeRoutes from './controllers/UnidadeController';
 import dadosUsuariosRoutes from './controllers/DadosUsuarioController';
-import CNPJRoutes from './controllers/CnpjCorreiosController';
-import RelatorioRoutes from './controllers/RelatorioController';
-import { AtualizarCtesRecorrente } from './services/RelatorioService';
+import fs from 'fs';
+
 let jobRunning = false; 
-let jobRunningAtualizar = false; 
 
 dotenv.config();
 
-const fastify = Fastify({ logger: true });
+const fastify = Fastify({ 
+  logger: true,
+  //https: {
+    //key: fs.readFileSync("/etc/letsencrypt/live/api.envioprime.com.br/privkey.pem"),
+    //cert: fs.readFileSync("/etc/letsencrypt/live/api.envioprime.com.br/cert.pem"),
+   // ca: fs.readFileSync("/etc/letsencrypt/live/api.envioprime.com.br/chain.pem"),
+  //},
+});
 const prisma = new PrismaClient();
 
 fastify.addHook('onRequest', (request, reply, done) => {
@@ -39,39 +44,14 @@ unidadeRoutes(fastify, prisma)
 dadosUsuariosRoutes(fastify, prisma)
 RouteRomaneioStockfy(fastify, prisma);
 circuitController(fastify);
-CNPJRoutes(fastify, prisma);
-RelatorioRoutes(fastify, prisma)
 
 fastify.get('/', async (request, reply) => {
-  reply.send({ status: 'Servidor rodando corretamente' });
+  reply.send({ status: new Date() + 'Servidor rodando corretamente versÃ£o 1.1' });
 });
-
-
-
-// cron.schedule('*/5 4-23 * * *', async () => {
-//   if (jobRunningAtualizar) {
-//     console.log('atualização. Ignorando nova execução.');
-//     return;
-//   }
-
-//   try {
-//     jobRunningAtualizar = true; 
-
-//     await AtualizarCtesRecorrente(); 
-
-//     console.log('Job de busca de CTe concluído.');
-
-//   } catch (error) {
-//     console.error('Erro ao executar o job:', error);
-//   } finally {
-//     jobRunningAtualizar = false; 
-//     console.log('Job finalizado.');
-//   }
-// });
 
 cron.schedule('*/1 4-23 * * *', async () => {
   if (jobRunning) {
-    console.log('O job já está em execução. Ignorando nova execução.');
+    console.log(new Date() + 'O job jÃ¡ estÃ¡ em execuÃ§Ã£o. Ignorando nova execuÃ§Ã£o.');
     return;
   }
 
@@ -84,14 +64,14 @@ cron.schedule('*/1 4-23 * * *', async () => {
     jobRunning = true; 
     console.log('Iniciando job de busca de CTe...');
 
-    const promessas = unidades.map(unidade => {
-      console.log(`Iniciando processamento da unidade: ${unidade.Unidade}`);
-      return buscarEInserirCtesRecorrente(unidade.Unidade);
-    });
+  const promessas = unidades.map(unidade => {
+    console.log(`Iniciando processamento da unidade: ${unidade.Unidade}`);
+    return buscarEInserirCtesRecorrente(unidade.Unidade);
+  });
 
-    // Executar todas as promessas em paralelo
-    await Promise.all(promessas);
-    console.log('Job de busca de CTe concluído.');
+  // Executar todas as promessas em paralelo
+  await Promise.all(promessas);
+  console.log('Job de busca de CTe concluÃ­do.');
 
   } catch (error) {
     console.error('Erro ao executar o job:', error);
@@ -104,7 +84,8 @@ cron.schedule('*/1 4-23 * * *', async () => {
 const start = async () => {
   try {
     await fastify.listen({ port, host: '0.0.0.0' });
-    console.log(`Servidor rodando na porta ${port}`);
+    console.log('\x1b[33m%s\x1b[0m', 'Running in Production Mode');
+    console.log(`Server is running on port ${port}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
