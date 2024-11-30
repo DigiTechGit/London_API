@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Ctes" ADD COLUMN     "Unidade" TEXT NOT NULL DEFAULT 'CTA';
