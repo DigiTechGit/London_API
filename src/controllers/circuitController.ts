@@ -1,4 +1,5 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import fastify, { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { PrismaClient } from '@prisma/client';
 
 const apiKey = process.env.API_KEY;
 

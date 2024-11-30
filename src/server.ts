@@ -46,12 +46,12 @@ RouteRomaneioStockfy(fastify, prisma);
 circuitController(fastify);
 
 fastify.get('/', async (request, reply) => {
-  reply.send({ status: new Date() + 'Servidor rodando corretamente versÃ£o 1.1' });
+  reply.send({ status: new Date() + 'Servidor rodando corretamente versão 1.1' });
 });
 
 cron.schedule('*/1 4-23 * * *', async () => {
   if (jobRunning) {
-    console.log(new Date() + 'O job jÃ¡ estÃ¡ em execuÃ§Ã£o. Ignorando nova execuÃ§Ã£o.');
+    console.log(new Date() + 'O job já está em execução. Ignorando nova execução.');
     return;
   }
 
@@ -71,7 +71,7 @@ cron.schedule('*/1 4-23 * * *', async () => {
 
   // Executar todas as promessas em paralelo
   await Promise.all(promessas);
-  console.log('Job de busca de CTe concluÃ­do.');
+  console.log('Job de busca de CTe concluído.');
 
   } catch (error) {
     console.error('Erro ao executar o job:', error);

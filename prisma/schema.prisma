@@ -14,7 +14,7 @@ generator client {
 // Modelo para armazenar os dados do usuário
 model Motorista {
   id        Int    @id @default(autoincrement())
-  placa     String @unique // A placa deve ser única no banco de dados
+  placa     String 
   idCircuit String
 }
 
