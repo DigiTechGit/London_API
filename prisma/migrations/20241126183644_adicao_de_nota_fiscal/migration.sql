@@ -1,3 +1,16 @@
+-- AlterTable
+ALTER TABLE "Ctes" ADD COLUMN     "codUltOco" INTEGER NOT NULL DEFAULT 0;
+
+-- CreateTable
+CREATE TABLE "CnpjTb" (
+    "id" TEXT NOT NULL,
+    "CNPJ" TEXT NOT NULL,
+    "idAtivo" BOOLEAN NOT NULL,
+    "desc" TEXT,
+
+    CONSTRAINT "CnpjTb_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateTable
 CREATE TABLE "NotaFiscal" (
     "id" SERIAL NOT NULL,

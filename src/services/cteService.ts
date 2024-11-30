@@ -142,7 +142,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
                   },
                 },
               },
-               NotaFiscal: {
+              NotaFiscal: {
                  create: cte.notasFiscais.map((nota) => ({
                    chaveNFe: nota.chave_nfe,
                    serNF: nota.serNF,
