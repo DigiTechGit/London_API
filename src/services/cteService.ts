@@ -83,7 +83,16 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
         if (existingCTe) {
           await prisma.ctes.update({
             where: { id: existingCTe.id },
-            data: {dt_alteracao, codUltOco: cte.codUltOco },
+            data: {dt_alteracao, codUltOco: cte.codUltOco, 
+              motorista: {
+                connectOrCreate: {
+                  where: { cpf: cte.cpfMotorista },
+                  create: {
+                    cpf: cte.cpfMotorista,
+                    nome: cte.nomeMotorista,
+                  },
+                },
+              }},
           });
           atualizados++;
         } else {
