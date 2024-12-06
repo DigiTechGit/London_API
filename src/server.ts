@@ -49,7 +49,7 @@ fastify.get('/', async (request, reply) => {
   reply.send({ status: new Date().toISOString() + ' - Servidor rodando corretamente versão 1.1' });
 });
 
-cron.schedule('*/1 4-23 * * *', async () => {
+cron.schedule('* * 4-23 * * *', async () => {
   if (jobRunning) {
     console.log(new Date().toISOString() + ' - O job já está em execução. Ignorando nova execução.');
     return;
