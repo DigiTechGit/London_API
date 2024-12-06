@@ -26,6 +26,7 @@ interface Recebedor {
 export interface CTeRequestBody {
   chaveCTe: string;
   valorFrete: number;
+  ordem: number;
   nomeMotorista: string;
   cpfMotorista: string;
   placaVeiculo: string;
