@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Ctes" ADD COLUMN     "ordem" INTEGER NOT NULL DEFAULT 0;

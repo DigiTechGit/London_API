@@ -81,19 +81,35 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
         });
 
         if (existingCTe) {
-          await prisma.ctes.update({
-            where: { id: existingCTe.id },
-            data: {dt_alteracao, codUltOco: cte.codUltOco, 
-              motorista: {
-                connectOrCreate: {
-                  where: { cpf: cte.cpfMotorista },
-                  create: {
-                    cpf: cte.cpfMotorista,
-                    nome: cte.nomeMotorista,
-                  },
+          if(cte.ordem > existingCTe.ordem && existingCTe.placaVeiculo.toUpperCase() != cte.placaVeiculo.toUpperCase()){
+            let motoristaData;
+            if (cte.cpfMotorista && cte.nomeMotorista) {
+              motoristaData = await prisma.motorista_ssw.upsert({
+                where: { cpf: cte.cpfMotorista },
+                update: {},
+                create: {
+                  cpf: cte.cpfMotorista,
+                  nome: cte.nomeMotorista,
                 },
-              }},
-          });
+              });
+            }
+ 
+            await prisma.ctes.update({
+              where: { id: existingCTe.id },
+              data: {
+                dt_alteracao, 
+                codUltOco: cte.codUltOco,  
+                placaVeiculo: cte.placaVeiculo, 
+                statusId: 1,
+                motoristaId: motoristaData ? motoristaData.id : undefined,
+              },
+            });
+          } else {
+            await prisma.ctes.update({
+              where: { id: existingCTe.id },
+              data: {dt_alteracao, codUltOco: cte.codUltOco},
+            });
+          }
           atualizados++;
         } else {
           await prisma.ctes.create({
@@ -105,6 +121,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
               placaVeiculo: cte.placaVeiculo,
               previsaoEntrega: cte.previsaoEntrega,
               codUltOco: cte.codUltOco,
+              ordem: cte.ordem,
               motorista: {
                 connectOrCreate: {
                   where: { cpf: cte.cpfMotorista },
