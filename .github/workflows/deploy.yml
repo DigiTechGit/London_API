@@ -19,4 +19,8 @@ jobs:
         echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H 195.200.7.133 >> ~/.ssh/known_hosts
-        ssh -o StrictHostKeyChecking=no root@195.200.7.133 'cd /dados/london_romaneio/London_API && git pull origin master && pm2 restart 0'
+        ssh -i ~/.ssh/id_rsa root@195.200.7.133 "
+          cd /dados/london_romaneio/London_API && \
+          git pull origin master && \
+          pm2 restart 0
+        "
