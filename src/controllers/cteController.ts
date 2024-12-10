@@ -405,6 +405,7 @@ export default function cteRoutes(
           },
         };
       }
+      
       // Buscar os CTe's com base nos filtros
       const ctes = await prisma.ctes.findMany({
         where: {
