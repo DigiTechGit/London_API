@@ -318,6 +318,7 @@ export default function cteRoutes(
           destinatario: true,
           recebedor: true,
           status: true,
+          NotaFiscal: true,
         },
       });
       
@@ -420,6 +421,7 @@ export default function cteRoutes(
           destinatario: true,
           recebedor: true,
           status: true,
+          NotaFiscal: true,
         },
       });
 
