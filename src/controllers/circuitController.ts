@@ -361,7 +361,8 @@ export default function circuitController
   const generatePDF = async (data: any) => {
     const doc = new PDFDocument({ margin: 30 });
     let buffers: any = [];
-    
+    const motorista = data.motorista;
+    const Nfes = data.Nfes;
     // Adiciona buffers para armazenar o conteúdo do PDF
     doc.on('data', buffers.push.bind(buffers));
     
@@ -369,15 +370,22 @@ export default function circuitController
     doc.on('end', () => {
         console.log('PDF gerado');
     });
-    
-    const Nfes = data.Nfes;
+
+    doc.fontSize(7).text(`PLACA: ${motorista.placa}`, { continued: true, align: 'left' })
+      .text(` CPF: ${cpfMask(data.motorista.cpf)}`, { continued: true, align: 'left' })
+      .text(` NOME: ${data.motorista.nome}`, { continued: true, align: 'left' });
+      doc.moveDown(1);
+    doc.moveTo(doc.page.margins.left, doc.y)
+    .lineTo(doc.page.width - doc.page.margins.right, doc.y)
+    .stroke();
+    doc.moveDown(1);
     // Loop pelas paradas
     for (let i = 0; i < Nfes.length; i++) {
         const stops = Nfes[i];
     
         for (const stop of stops) {
           // Título
-          doc.fontSize(7).text(`ORDEM: ${stop.ctesPorParada.posicao}`, { align: 'left' });
+          doc.fontSize(7).text(`ORDEM: ${stop.ctesPorParada[0].posicao}`, { align: 'left' });
           doc.fontSize(7).text(`NF: ${stop.nrNfre}`, { continued: true })
             .fontSize(7).text(` REMETENTE: ${stop.remetente}`, { continued: true, align: 'center' })
             .fontSize(7).text(` PREVISÃO ENTREGA: ${stop.prevEntrega}`, { align: 'right' });
@@ -434,15 +442,11 @@ export default function circuitController
             .stroke();
           doc.fontSize(7).text(`GRAU DE PARENTESCO`, { align: 'right' });
 
-          // doc.moveTo(doc.page.margins.left, doc.y - 10)
-          //   .lineTo(doc.page.width - doc.page.margins.right, doc.y - 10)
-          //   .stroke();
-          // Adicionar a linha de separação abaixo do código de barras
-          doc.moveDown();
+          doc.moveDown(3); // Espaço extra após a linha
           doc.moveTo(doc.page.margins.left, doc.y)
               .lineTo(doc.page.width - doc.page.margins.right, doc.y)
               .stroke();
-          doc.moveDown(2); // Espaço extra após a linha
+          doc.moveDown(3); // Espaço extra após a linha
         }
     
         // Adicionar uma nova página para cada parada, exceto a última
@@ -483,4 +487,8 @@ export default function circuitController
           );
       });
   };
+
+  const cpfMask = (cpf: string) => {
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  }
 }
