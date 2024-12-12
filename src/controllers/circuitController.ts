@@ -265,6 +265,7 @@ export default function circuitController
           const objNFe = cte.NotaFiscal.map((nfe: any) => ({
             chaveNfe: nfe.chaveNFe,
             nrNfre: nfe.nroNF,
+            qtdeVolumes: nfe.qtdeVolumes,
             remetente: cte.remetente.nome,
             prevEntrega: cte.previsaoEntrega,
             destinatario: cte.destinatario.nome,
@@ -390,6 +391,7 @@ export default function circuitController
             .fontSize(7).text(` REMETENTE: ${stop.remetente}`, { continued: true, align: 'center' })
             .fontSize(7).text(` PREVISÃO ENTREGA: ${stop.prevEntrega}`, { align: 'right' });
           doc.moveDown(0.5);
+          doc.fontSize(7).text(`QTD VOLUMES: ${stop.qtdeVolumes}`, { align: 'left' });
 
           doc.fontSize(7).text(`DESTINATÁRIO: ${stop.destinatario}`);
           doc.moveDown(0.5);
