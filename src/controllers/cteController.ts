@@ -318,6 +318,7 @@ export default function cteRoutes(
           destinatario: true,
           recebedor: true,
           status: true,
+          NotaFiscal: true,
         },
       });
       
@@ -404,6 +405,7 @@ export default function cteRoutes(
           },
         };
       }
+      
       // Buscar os CTe's com base nos filtros
       const ctes = await prisma.ctes.findMany({
         where: {
@@ -420,6 +422,7 @@ export default function cteRoutes(
           destinatario: true,
           recebedor: true,
           status: true,
+          NotaFiscal: true,
         },
       });
 
@@ -464,6 +467,106 @@ export default function cteRoutes(
 
       reply.status(200).send(motoristasComCtes);
     } catch (error) {
+      reply.status(500).send({ error: "Failed to list CTe" });
+    }
+  });
+
+  fastify.get("/quantidadeCtesNaoEnviados", async (request, reply) => {
+    try {
+      const { unidade } = request.query as { unidade: string };
+      let filtroData = {};
+
+      const ultimoLog = await prisma.log.findFirst({
+        where: {
+          tp: `AGENDADOR-${unidade.toUpperCase()}`,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      const motoristasSalvos = await prisma.motorista.findMany({
+        select: {
+          idCircuit: true,
+          placa: true,
+        }
+      });
+
+      const placasSalvas = motoristasSalvos.map((motorista) => motorista.placa);
+      
+      if (ultimoLog && ultimoLog.createdAt) {
+        const dtAlteracaoComMinutos = new Date(ultimoLog.createdAt);
+        dtAlteracaoComMinutos.setMinutes(dtAlteracaoComMinutos.getMinutes());
+        filtroData = {
+          dt_alteracao: {
+            gte: dtAlteracaoComMinutos,
+          },
+        };
+      }
+      
+      // Buscar os CTe's com base nos filtros
+      const ctes = await prisma.ctes.findMany({
+        where: {
+          codUltOco: 85,
+          placaVeiculo: {
+            in: placasSalvas,
+          },
+          Unidade: unidade.toUpperCase(),
+          ...filtroData,
+        },
+        include: {
+          motorista: true,
+          remetente: true,
+          destinatario: true,
+          recebedor: true,
+          status: true,
+          NotaFiscal: true,
+        },
+      });
+      
+      // Enriquecer os CTe's com informação de cnpjCorreios
+      const ctesEnriched = await Promise.all(
+        ctes.map(async (cte) => {
+          const remetenteCNPJ = cte.remetente?.cnpjCPF;
+          const cnpjExists = await prisma.cnpjTb.findFirst({
+            where: {
+              CNPJ: remetenteCNPJ,
+            },
+          });
+      
+          return {
+            ...cte,
+            cnpjCorreios: !!cnpjExists,
+          };
+        })
+      );
+
+      const motoristasComCtes = motoristasSalvos
+      .map((motorista) => {
+        const ctesDoMotorista = ctesEnriched.filter(
+          (cte) => cte.placaVeiculo === motorista.placa 
+        );
+
+        const motoristaComNome = {
+          ...motorista,
+          nome: ctesDoMotorista[0]?.motorista?.nome || null, 
+        };
+        const ctesEnviados = ctesDoMotorista.filter((cte) => cte.statusId === 2);
+        const ctesNaoEnviados = ctesDoMotorista.filter((cte) => cte.statusId === 1);
+        return ctesNaoEnviados.length > 0 && ctesEnviados.length == 0
+          ? {
+              ...motoristaComNome,
+              ctes: ctesDoMotorista.filter((cte) => cte.statusId === 1),
+              ctesEnviados: ctesEnviados.length,
+              ctesNaoEnviados: ctesNaoEnviados.length,
+            } : null;
+      })
+      .filter(Boolean); // Remove itens nulos
+        
+
+      reply.status(200).send(motoristasComCtes);
+    } catch (error) {
+      console.error(error);
       reply.status(500).send({ error: "Failed to list CTe" });
     }
   });
