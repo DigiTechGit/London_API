@@ -143,7 +143,7 @@ export default function RelatorioRoutes(
 
       const ctes = await prisma.ctes.findMany({
         where: {
-          createdAt: {
+          dt_alteracao: {
             gte: dataInicio.toDate(),
             lte: dataFim.toDate(),
           },
