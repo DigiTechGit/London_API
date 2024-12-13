@@ -63,7 +63,7 @@ unidadeRoutes(fastify, prisma)
 dadosUsuariosRoutes(fastify, prisma)
 RelatorioRoutes(fastify, prisma)
 RouteRomaneioStockfy(fastify, prisma);
-circuitController(fastify);
+circuitController(fastify, prisma);
 
 fastify.get('/', async (request, reply) => {
   reply.send({ status: new Date().toISOString() + ' - Servidor rodando corretamente versão 1.1' });
