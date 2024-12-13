@@ -32,6 +32,7 @@ export default function userRoutes(fastify: FastifyInstance, prisma: PrismaClien
         return;
       }
 
+      
       const authData = await authResponse.json();
 
       reply.code(201).send({authData }); 

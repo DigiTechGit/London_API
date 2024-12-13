@@ -12,8 +12,11 @@ import { buscarEInserirCtesRecorrente } from './services/cteService';
 import unidadeRoutes from './controllers/UnidadeController';
 import dadosUsuariosRoutes from './controllers/DadosUsuarioController';
 import fs from 'fs';
+import { AtualizarCtesRecorrente } from './services/RelatorioService';
+import RelatorioRoutes from './controllers/RelatorioController';
 
 let jobRunning = false; 
+let jobRelatorioRunning = false; 
 
 dotenv.config();
 
@@ -26,6 +29,22 @@ const fastify = Fastify({
   //},
 });
 const prisma = new PrismaClient();
+
+// fastify.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
+
+//   // Ignorar a rota de login
+//   if (request.url.includes('/User') || request.url === '/') {
+//     return;
+//   }
+
+//   const token = request.headers['authorization'];
+
+//   if (!token) {
+//     reply.code(401).send({ error: 'Token invalid' });
+//     return;
+//   }
+// });
+
 
 fastify.addHook('onRequest', (request, reply, done) => {
   reply.header('Access-Control-Allow-Origin', '*'); 
@@ -42,6 +61,7 @@ cteRoutes(fastify, prisma);
 userRoutes(fastify, prisma);
 unidadeRoutes(fastify, prisma)
 dadosUsuariosRoutes(fastify, prisma)
+RelatorioRoutes(fastify, prisma)
 RouteRomaneioStockfy(fastify, prisma);
 circuitController(fastify);
 
@@ -80,6 +100,29 @@ cron.schedule('* * 4-23 * * *', async () => {
     console.log('Job finalizado.');
   }
 });
+
+cron.schedule('* * * * * *', async () => {
+  if (jobRelatorioRunning) {
+    console.log(new Date().toISOString() + ' - O job Atualizar já está em execução. Ignorando nova execução.');
+    return;
+  }
+  try {
+    jobRelatorioRunning = true; 
+    console.log('Iniciando job de busca de CTe...');
+
+ 
+  // Executar todas as promessas em paralelo
+  await   AtualizarCtesRecorrente();
+  console.log('Job de busca de CTe concluído.');
+
+  } catch (error) {
+    console.error('Erro ao executar o job:', error);
+  } finally {
+    jobRelatorioRunning = false; 
+    console.log('Job finalizado.');
+  }
+});
+
 
 const start = async () => {
   try {

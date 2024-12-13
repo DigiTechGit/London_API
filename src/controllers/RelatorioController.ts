@@ -1,6 +1,12 @@
 import { FastifyInstance } from "fastify";
 import { PrismaClient } from "@prisma/client";
-import dayjs from 'dayjs';
+import dayjs from "dayjs";
+
+interface RelatorioMotorista {
+  motorista: string;
+  entregue: number;
+  naoEntregue: number;
+}
 
 export default function RelatorioRoutes(
   fastify: FastifyInstance,
@@ -8,16 +14,16 @@ export default function RelatorioRoutes(
 ) {
   const relatorioDiario = async (date: string) => {
     try {
-      const dataInicio = dayjs(date).startOf('day'); 
-      const dataFim = dayjs(date).endOf('day');
-  
+      const dataInicio = dayjs(date).startOf("day");
+      const dataFim = dayjs(date).endOf("day");
+
       const ctes = await prisma.ctes.findMany({
         where: {
           dt_alteracao: {
-            gte: dataInicio.toDate(), 
+            gte: dataInicio.toDate(),
             lte: dataFim.toDate(),
           },
-          codUltOco: {gt: 0}
+          codUltOco: { gt: 0 },
         },
         select: {
           placaVeiculo: true,
@@ -27,14 +33,16 @@ export default function RelatorioRoutes(
 
       const entregaStatusCodes = new Set([1]);
 
-    // Filtrar os registros onde o tipo de processo é "ENTREGA" e o código de status está no conjunto de entregaStatusCodes
-      const entregas = ctes.filter(cte => entregaStatusCodes.has(cte.codUltOco));
-    
+      // Filtrar os registros onde o tipo de processo é "ENTREGA" e o código de status está no conjunto de entregaStatusCodes
+      const entregas = ctes.filter((cte) =>
+        entregaStatusCodes.has(cte.codUltOco)
+      );
+
       const totalEntregues = entregas.length;
-  
-      const placasUnicas = new Set(ctes.map(cte => cte.placaVeiculo));
+
+      const placasUnicas = new Set(ctes.map((cte) => cte.placaVeiculo));
       const totalCarros = placasUnicas.size;
-  
+
       const statusMap: Record<number, string> = {
         1: "MERCADORIA ENTREGUE",
         2: "MERCADORIA PRE-ENTREGUE (MOBILE)",
@@ -108,15 +116,15 @@ export default function RelatorioRoutes(
         95: "PREVISÃO DE ENTREGA ALTERADA",
         99: "CTRC BAIXADO/CANCELADO",
       };
-  
+
       // Contadores de status
       const statusCount: Record<string, number> = {};
-  
-      ctes.forEach(cte => {
-        const descricao = statusMap[cte.codUltOco] || "OUTRO"; 
+
+      ctes.forEach((cte) => {
+        const descricao = statusMap[cte.codUltOco] || "OUTRO";
         statusCount[descricao] = (statusCount[descricao] || 0) + 1;
       });
-  
+
       return {
         totalEntregues,
         totalCarros,
@@ -127,17 +135,82 @@ export default function RelatorioRoutes(
       return;
     }
   };
-  
+
+  const relatorioMotorista = async (date: string) => {
+    try {
+      const dataInicio = dayjs(date).startOf("day");
+      const dataFim = dayjs(date).endOf("day");
+
+      const ctes = await prisma.ctes.findMany({
+        where: {
+          createdAt: {
+            gte: dataInicio.toDate(),
+            lte: dataFim.toDate(),
+          },
+          codUltOco: { gt: 0 },
+        },
+        select: {
+          motorista: {
+            select: {
+              nome: true,
+            },
+          },
+          codUltOco: true,
+        },
+      });
+
+      const entregaStatusCodes = new Set([1]);
+
+      const entregasPorMotorista: Record<string, RelatorioMotorista> = {};
+
+      ctes.forEach((cte) => {
+        const motoristaNome = cte.motorista?.nome || "Desconhecido";
+        if (!entregasPorMotorista[motoristaNome]) {
+          entregasPorMotorista[motoristaNome] = {
+            motorista: motoristaNome,
+            entregue: 0,
+            naoEntregue: 0,
+          };
+        }
+
+        if (entregaStatusCodes.has(cte.codUltOco)) {
+          entregasPorMotorista[motoristaNome].entregue += 1;
+        } else {
+          entregasPorMotorista[motoristaNome].naoEntregue += 1;
+        }
+      });
+
+      return Object.values(entregasPorMotorista); // Retorna uma lista com os dados por motorista
+    } catch (error) {
+      console.error(error);
+      return;
+    }
+  };
+
+  fastify.get("/relatorio/motorista", async (request, reply) => {
+    try {
+      const { data } = request.query as { data: string };
+      if (!data) {
+        return reply.status(400).send({ error: "Data é necessária" });
+      }
+
+      const dados = await relatorioMotorista(data);
+      reply.status(200).send(dados);
+    } catch (error) {
+      console.error(error);
+      reply.status(500).send({ error: "Failed to list CTe" });
+    }
+  });
 
   fastify.get("/relatorio/diario", async (request, reply) => {
     try {
-      const { data } = request.query as { data: string};
+      const { data } = request.query as { data: string };
       // Obtém os CTe com codUltOco = 1
-      if (!data ) {
+      if (!data) {
         return reply.status(400).send({ error: "Data são necessários" });
       }
 
-      const dados = await relatorioDiario( data );
+      const dados = await relatorioDiario(data);
 
       // Envia a resposta com as informações
       reply.status(200).send(dados);
@@ -147,92 +220,100 @@ export default function RelatorioRoutes(
     }
   });
 
-fastify.get("/relatorio/semanal", async (request, reply) => {
-  try {
-    const { data } = request.query as { data: string };
+  fastify.get("/relatorio/semanal", async (request, reply) => {
+    try {
+      const { data } = request.query as { data: string };
 
-    // Verifica se a data foi fornecida
-    if (!data) {
-      return reply.status(400).send({ error: "Data é necessária" });
+      // Verifica se a data foi fornecida
+      if (!data) {
+        return reply.status(400).send({ error: "Data é necessária" });
+      }
+
+      // Converte a data recebida para um objeto Day.js
+      const dataInicial = dayjs(data); // Data inicial da semana (dia fornecido)
+
+      if (!dataInicial.isValid()) {
+        return reply.status(400).send({ error: "Data inválida" });
+      }
+
+      const primeiroDiaDaSemana = dataInicial.startOf("week");
+
+      const resultadosSemanais = [];
+
+      let diaAtual = primeiroDiaDaSemana;
+      for (let i = 0; i < 7; i++) {
+        const dataDia = diaAtual.format("YYYY-MM-DD");
+
+        // Chama a função relatorioDiario para cada dia da semana
+        const relatorio = await relatorioDiario(dataDia);
+
+        resultadosSemanais.push({
+          dia: dataDia,
+          totalEntregues: relatorio!.totalEntregues,
+          totalCarros: relatorio!.totalCarros,
+        });
+
+        // Adiciona um dia para o próximo loop
+        diaAtual = diaAtual.add(1, "day");
+      }
+
+      reply.status(200).send(resultadosSemanais);
+    } catch (error) {
+      console.error(error);
+      reply.status(500).send({ error: "Falha ao gerar relatório semanal" });
     }
-
-    // Converte a data recebida para um objeto Day.js
-    const dataInicial = dayjs(data); // Data inicial da semana (dia fornecido)
-    
-    if (!dataInicial.isValid()) {
-      return reply.status(400).send({ error: "Data inválida" });
-    }
-
-    const primeiroDiaDaSemana = dataInicial.startOf('week'); 
-
-    const resultadosSemanais = [];
-
-    let diaAtual = primeiroDiaDaSemana;
-    for (let i = 0; i < 7; i++) {
-      const dataDia = diaAtual.format('YYYY-MM-DD');
-
-      // Chama a função relatorioDiario para cada dia da semana
-      const relatorio = await relatorioDiario(dataDia);
-      
-      resultadosSemanais.push({
-        dia: dataDia,
-        totalEntregues: relatorio!.totalEntregues,
-        totalCarros: relatorio!.totalCarros,
-      });
-
-      // Adiciona um dia para o próximo loop
-      diaAtual = diaAtual.add(1, 'day');
-    }
-
-    reply.status(200).send(resultadosSemanais);
-  } catch (error) {
-    console.error(error);
-    reply.status(500).send({ error: "Falha ao gerar relatório semanal" });
-  }
-});
+  });
 
   fastify.get("/relatorio/mensal", async (request, reply) => {
     try {
-      const { mes, ano } = request.query as { mes: string, ano: string }; // Supondo que a data seja fornecida como 'mes' e 'ano' na query
-  
+      const { mes, ano } = request.query as { mes: string; ano: string }; // Supondo que a data seja fornecida como 'mes' e 'ano' na query
+
       // Verifica se o mês e ano foram fornecidos
       if (!mes || !ano) {
         return reply.status(400).send({ error: "Mês e ano são necessários" });
       }
-  
+
       // Converte mês e ano para números
       const mesNumero = parseInt(mes, 10);
       const anoNumero = parseInt(ano, 10);
-  
+
       // Verifica se o mês está no intervalo correto
       if (mesNumero < 1 || mesNumero > 12) {
         return reply.status(400).send({ error: "Mês inválido" });
       }
-  
-      // Calcula o primeiro e o último dia do mês
+
+      // Calcula o primeiro dia do mês
       const primeiroDiaDoMes = dayjs(new Date(anoNumero, mesNumero - 1, 1)); // Primeiro dia do mês
-      const ultimoDiaDoMes = primeiroDiaDoMes.endOf('month'); // Último dia do mês
-  
+
+      // Calcula o último dia do mês ou o dia de ontem caso o mês seja o atual
+      const hoje = dayjs();
+      const ultimoDiaDoMes =
+        hoje.month() + 1 === mesNumero && hoje.year() === anoNumero
+          ? hoje.subtract(1, "day")
+          : primeiroDiaDoMes.endOf("month");
+
       const resultadosMensais = [];
-  
+
       let diaAtual = primeiroDiaDoMes;
-      while (diaAtual.isBefore(ultimoDiaDoMes) || diaAtual.isSame(ultimoDiaDoMes, 'day')) {
-        const dataDia = diaAtual.format('YYYY-MM-DD');
-        
+      while (
+        diaAtual.isBefore(ultimoDiaDoMes) ||
+        diaAtual.isSame(ultimoDiaDoMes, "day")
+      ) {
+        const dataDia = diaAtual.format("YYYY-MM-DD");
+
         const relatorio = await relatorioDiario(dataDia);
         resultadosMensais.push({
           dia: dataDia,
           totalEntregues: relatorio!.totalEntregues,
           totalCarros: relatorio!.totalCarros,
         });
-  
-        diaAtual = diaAtual.add(1, 'day');
+
+        diaAtual = diaAtual.add(1, "day");
       }
-  
-      reply.status(200).send(resultadosMensais);
+
+      return reply.status(200).send(resultadosMensais);
     } catch (error) {
-      console.error(error);
-      reply.status(500).send({ error: "Failed to generate monthly report" });
+      return reply.status(500).send({ error: "Erro interno do servidor" });
     }
   });
 }
