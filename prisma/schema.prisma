@@ -14,7 +14,7 @@ generator client {
 // Modelo para armazenar os dados do usuário
 model Motorista {
   id        Int    @id @default(autoincrement())
-  placa     String 
+  placa     String
   idCircuit String
 }
 
@@ -33,6 +33,7 @@ model Ctes {
   statusId        Int
   codUltOco       Int     @default(0)
   ordem           Int     @default(0)
+  listarCTE       Boolean @default(false)
 
   createdAt    DateTime      @default(now()) // Campo para registrar a data de criação
   dt_alteracao DateTime      @default(now()) // Campo para registrar a data de alteracao
