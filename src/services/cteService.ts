@@ -74,27 +74,26 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
 
     // Obter cache existente
     const cachedCtes = cacheCtes.get(UNIDADE) || [];
-    const ctesNovos = ctes.filter((cte: { chaveCTe: any; nroCTRC: any; ordem: number; }) => {
+    const ctesNovos = ctes.filter((cte: { chaveCTe: any; nroCTRC: any; }) => {
       const existing = cachedCtes.find(
-        (cached: { chaveCTe: any; nroCTRC: any; ordem: number; }) => cached.chaveCTe === cte.chaveCTe && cached.nroCTRC === cte.nroCTRC
+        (cached: { chaveCTe: any; nroCTRC: any; }) => cached.chaveCTe === cte.chaveCTe && cached.nroCTRC === cte.nroCTRC
       );
 
-      // Atualizar listarCTE para false para entradas com ordem menor
-      if (existing && cte.ordem <= existing.ordem) {
+      if (existing) {
         prisma.ctes.updateMany({
-          where: { chaveCTe: cte.chaveCTe, nroCTRC: cte.nroCTRC, ordem: existing.ordem },
+          where: { chaveCTe: cte.chaveCTe, nroCTRC: cte.nroCTRC },
           data: { listarCTE: false },
         });
       }
 
-      return !existing || cte.ordem > existing.ordem;
+      return !existing;
     });
 
     const ctesRemovidos = cachedCtes.filter(
       (cached: { chaveCTe: any; }) => !ctes.some((cte: { chaveCTe: any; }) => cte.chaveCTe === cached.chaveCTe)
     );
 
-    // Atualizar os CTes que não estão mais na API
+    // Atualizar os CTes que n�o est�o mais na API
     if (ctesRemovidos.length > 0) {
       for (const cte of ctesRemovidos) {
         await prisma.ctes.updateMany({
@@ -128,7 +127,6 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
 
         if (existingCTE) {
           if (
-            cte.ordem > existingCTE.ordem &&
             existingCTE.placaVeiculo.toUpperCase() !== cte.placaVeiculo.toUpperCase()
           ) {
             let motoristaData;
@@ -273,14 +271,13 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
 
 export async function atualizarStatusCtes() {
   try {
-    // Buscar todos os CTes no banco de dados, ordenados pela ordem em ordem decrescente
     const ctes = await prisma.ctes.findMany({
       select: {
-        id: true, // Identificador único do CTe
+        id: true, // Identificador �nico do CTe
         chaveCTe: true, // Chave do CTe
-        nroCTRC: true, // Número do CTRC
-        ordem: true, // Ordem para priorização
-        listarCTE: true, // Indicador se o CTe está ativo para listagem
+        nroCTRC: true, // N�mero do CTRC
+        ordem: true, // Ordem para prioriza��o
+        listarCTE: true, // Indicador se o CTe est� ativo para listagem
       },
       orderBy: {
         ordem: "desc", // Ordena os CTes para que o maior valor de ordem venha primeiro
@@ -289,9 +286,9 @@ export async function atualizarStatusCtes() {
 
     // Agrupar os CTes pelo par (chaveCTe, nroCTRC)
     const groupedCtes = ctes.reduce<Record<string, typeof ctes>>((acc, cte) => {
-      const key = `${cte.chaveCTe}-${cte.nroCTRC}`; // Cria uma chave única para agrupamento
+      const key = `${cte.chaveCTe}-${cte.nroCTRC}`; // Cria uma chave �nica para agrupamento
       if (!acc[key]) {
-        acc[key] = []; // Inicializa o grupo se não existir
+        acc[key] = []; // Inicializa o grupo se n�o existir
       }
       acc[key].push(cte); // Adiciona o CTe ao grupo correspondente
       return acc;
@@ -299,16 +296,16 @@ export async function atualizarStatusCtes() {
 
     // Iterar pelos grupos de CTes
     for (const key in groupedCtes) {
-      const ctesGroup = groupedCtes[key]; // Obtém todos os CTes do grupo
+      const ctesGroup = groupedCtes[key]; // Obt�m todos os CTes do grupo
 
       // Atualizar cada CTe no grupo
       ctesGroup.forEach((cte, index) => {
-        const isHighestOrder = index === 0; // Apenas o primeiro elemento (maior ordem) será listado
+        const isHighestOrder = index === 0; // Apenas o primeiro elemento (maior ordem) ser� listado
 
         // Se o estado atual de listarCTE estiver incorreto, atualiza no banco
         if (cte.listarCTE !== isHighestOrder) {
           prisma.ctes.update({
-            where: { id: cte.id }, // Filtra pelo ID único do CTe
+            where: { id: cte.id }, // Filtra pelo ID �nico do CTe
             data: { listarCTE: isHighestOrder }, // Atualiza o campo listarCTE
           });
         }
@@ -317,7 +314,7 @@ export async function atualizarStatusCtes() {
 
     console.log("Status dos CTes atualizado com sucesso.");
   } catch (error) {
-    // Captura e exibe erros durante a execução
+    // Captura e exibe erros durante a execu��o
     console.error("Erro ao atualizar status dos CTes:", error);
   }
 }
@@ -411,7 +408,6 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
 
         if (existingCTe) {
           if (
-            cte.ordem > existingCTe.ordem &&
             existingCTe.placaVeiculo.toUpperCase() !=
               cte.placaVeiculo.toUpperCase()
           ) {
