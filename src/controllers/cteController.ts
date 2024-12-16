@@ -87,7 +87,6 @@ export default function cteRoutes(
   fastify.get("/quantidadeCtesTotalPorStatus", async (request, reply) => {
     try {
       const { unidade, status } = request.query as { unidade: string, status: string };
-      let filtroData = {};
 
       const ultimoLog = await prisma.log.findFirst({
         where: {
@@ -110,11 +109,6 @@ export default function cteRoutes(
       if (ultimoLog && ultimoLog.createdAt) {
         const dtAlteracaoComMinutos = new Date(ultimoLog.createdAt);
         dtAlteracaoComMinutos.setMinutes(dtAlteracaoComMinutos.getMinutes());
-        filtroData = {
-          dt_alteracao: {
-            gte: dtAlteracaoComMinutos,
-          },
-        };
       }
       
       // Buscar os CTe's com base nos filtros
@@ -126,7 +120,7 @@ export default function cteRoutes(
           },
           statusId: statusFormatado,
           Unidade: unidade.toUpperCase(),
-          ...filtroData,
+          listarCTE: true,
         },
         include: {
           motorista: true,
