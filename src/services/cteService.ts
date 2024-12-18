@@ -105,6 +105,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     // Fim do processo
     const endTimeTotal = Date.now();
     const durationTotal = (endTimeTotal - startTimeTotal) / 1000;
+    const dt_alteracao = new Date();
 
     // Log detalhado
     console.log(`Log do processo de CTes para a unidade ${UNIDADE}:
@@ -116,11 +117,25 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     - CTes adicionados: ${adicionados}
     - CTes removidos: ${removidos.length}
     - CTes atualizados: ${modificados.length}`);
+    await prisma.log.create({
+      data: {
+        desc: `Log do processo de CTes para a unidade ${UNIDADE}:
+    - Tempo total: ${durationTotal} segundos
+    - Chamada à API: ${durationAPI} segundos
+    - Parsing da resposta: ${durationParsing} segundos
+    - Filtragem de CTes duplicados: ${durationFiltering} segundos
+    - Processamento de CTes (adicionar, remover, atualizar): ${durationProcessing} segundos
+    - CTes adicionados: ${adicionados}
+    - CTes removidos: ${removidos.length}
+    - CTes atualizados: ${modificados.length}`,
+        tp: `AGENDADOR-${UNIDADE}`,
+        createdAt: dt_alteracao,
+      },
+    });
   } catch (error) {
     console.log("Erro ao buscar e salvar CTe:", error);
   }
 }
-
 
 export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
   try {
@@ -311,89 +326,88 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
   }
 }
 
-async function adicionarCTEs(ctes: CTES[], UNIDADE:string) {
-  let criados = 0
-  for(const cte of ctes){
-  const motoristaData = await prisma.motorista_ssw.upsert({
-    where: { cpf: cte.cpfMotorista },
-    update: {},
-    create: {
-      cpf: cte.cpfMotorista,
-      nome: cte.nomeMotorista,
-    },
-  });
-
-  const remetenteData = await prisma.remetente.upsert({
-    where: { cnpjCPF: cte.remetente.cnpjCPF },
-    update: {},
-    create: {
-      cnpjCPF: cte.remetente.cnpjCPF,
-      nome: cte.remetente.nome,
-      tipo: cte.remetente.tipo,
-    },
-  });
-
-  const destinatarioData = await prisma.destinatario.upsert({
-    where: { cnpjCPF: cte.destinatario.cnpjCPF },
-    update: {},
-    create: {
-      cnpjCPF: cte.destinatario.cnpjCPF,
-      nome: cte.destinatario.nome,
-      tipo: cte.destinatario.tipo,
-    },
-  });
-
-  const recebedorData = await prisma.recebedor.upsert({
-    where: { cnpjCPF: cte.recebedor.cnpjCPF },
-    update: {},
-    create: {
-      cnpjCPF: cte.recebedor.cnpjCPF,
-      nome: cte.recebedor.nome,
-      tipo: cte.recebedor.tipo,
-      endereco: cte.recebedor.endereco,
-      numero: cte.recebedor.numero,
-      bairro: cte.recebedor.bairro,
-      cep: cte.recebedor.cep.toString(),
-      cidade: cte.recebedor.cidade,
-      uf: cte.recebedor.uf,
-      foneContato: cte.recebedor.foneContato,
-    },
-  });
-
-  await prisma.ctes.create({
-    data: {
-      chaveCTe: cte.chaveCTe,
-      Unidade: UNIDADE,
-      nroCTRC: cte.nroCTRC,
-      valorFrete: cte.valorFrete,
-      placaVeiculo: cte.placaVeiculo,
-      previsaoEntrega: cte.previsaoEntrega,
-      codUltOco: cte.codUltOco,
-      ordem: cte.ordem,
-      motoristaId: motoristaData.id,
-      remetenteId: remetenteData.id,
-      destinatarioId: destinatarioData.id,
-      recebedorId: recebedorData.id,
-      statusId: 1,
-      listarCTE: true,
-      NotaFiscal: {
-        create: cte.notasFiscais.map((nota: any) => ({
-          chaveNFe: nota.chave_nfe,
-          serNF: nota.serNF,
-          nroNF: nota.nroNF,
-          nroPedido: nota.nroPedido,
-          qtdeVolumes: nota.qtdeVolumes,
-          pesoReal: nota.pesoReal,
-          metragemCubica: nota.metragemCubica,
-          valorMercadoria: nota.valorMercadoria,
-        })),
+async function adicionarCTEs(ctes: CTES[], UNIDADE: string) {
+  let criados = 0;
+  for (const cte of ctes) {
+    const motoristaData = await prisma.motorista_ssw.upsert({
+      where: { cpf: cte.cpfMotorista },
+      update: {},
+      create: {
+        cpf: cte.cpfMotorista,
+        nome: cte.nomeMotorista,
       },
-    },
-  });
-  criados++;
+    });
 
-}
-return criados
+    const remetenteData = await prisma.remetente.upsert({
+      where: { cnpjCPF: cte.remetente.cnpjCPF },
+      update: {},
+      create: {
+        cnpjCPF: cte.remetente.cnpjCPF,
+        nome: cte.remetente.nome,
+        tipo: cte.remetente.tipo,
+      },
+    });
+
+    const destinatarioData = await prisma.destinatario.upsert({
+      where: { cnpjCPF: cte.destinatario.cnpjCPF },
+      update: {},
+      create: {
+        cnpjCPF: cte.destinatario.cnpjCPF,
+        nome: cte.destinatario.nome,
+        tipo: cte.destinatario.tipo,
+      },
+    });
+
+    const recebedorData = await prisma.recebedor.upsert({
+      where: { cnpjCPF: cte.recebedor.cnpjCPF },
+      update: {},
+      create: {
+        cnpjCPF: cte.recebedor.cnpjCPF,
+        nome: cte.recebedor.nome,
+        tipo: cte.recebedor.tipo,
+        endereco: cte.recebedor.endereco,
+        numero: cte.recebedor.numero,
+        bairro: cte.recebedor.bairro,
+        cep: cte.recebedor.cep.toString(),
+        cidade: cte.recebedor.cidade,
+        uf: cte.recebedor.uf,
+        foneContato: cte.recebedor.foneContato,
+      },
+    });
+
+    await prisma.ctes.create({
+      data: {
+        chaveCTe: cte.chaveCTe,
+        Unidade: UNIDADE,
+        nroCTRC: cte.nroCTRC,
+        valorFrete: cte.valorFrete,
+        placaVeiculo: cte.placaVeiculo,
+        previsaoEntrega: cte.previsaoEntrega,
+        codUltOco: cte.codUltOco,
+        ordem: cte.ordem,
+        motoristaId: motoristaData.id,
+        remetenteId: remetenteData.id,
+        destinatarioId: destinatarioData.id,
+        recebedorId: recebedorData.id,
+        statusId: 1,
+        listarCTE: true,
+        NotaFiscal: {
+          create: cte.notasFiscais.map((nota: any) => ({
+            chaveNFe: nota.chave_nfe,
+            serNF: nota.serNF,
+            nroNF: nota.nroNF,
+            nroPedido: nota.nroPedido,
+            qtdeVolumes: nota.qtdeVolumes,
+            pesoReal: nota.pesoReal,
+            metragemCubica: nota.metragemCubica,
+            valorMercadoria: nota.valorMercadoria,
+          })),
+        },
+      },
+    });
+    criados++;
+  }
+  return criados;
 }
 
 async function removerCTEs(ctes: CTES[], UNIDADE: string) {
@@ -443,10 +457,6 @@ async function atualizarCTEs(ctes: CTES[], UNIDADE: string) {
   }
 }
 
-
-
-
-
 function filtroCTEsDuplicadas(ctes: CTES[]) {
   const filteredCTES = ctes.reduce((acc, current) => {
     const existing = acc.find(
@@ -492,8 +502,8 @@ function compararCtes(cachedCtes: CTES[], filteredCTES: CTES[]) {
           cteCached.chaveCTe === cteFiltered.chaveCTe &&
           cteCached.serCTRC === cteFiltered.serCTRC &&
           cteCached.nroCTRC === cteFiltered.nroCTRC &&
-          cteCached.setor === cteFiltered.setor 
-        )
+          cteCached.setor === cteFiltered.setor
+      )
   );
 
   const removidos = cachedCtes.filter(
@@ -513,11 +523,9 @@ function compararCtes(cachedCtes: CTES[], filteredCTES: CTES[]) {
         cteCached.chaveCTe === cteFiltered.chaveCTe &&
         cteCached.serCTRC === cteFiltered.serCTRC &&
         cteCached.nroCTRC === cteFiltered.nroCTRC &&
-        cteCached.setor === cteFiltered.setor && 
-          (
-            cteCached.cpfMotorista !== cteFiltered.cpfMotorista ||
-            cteCached.placaVeiculo !== cteFiltered.placaVeiculo
-          )
+        cteCached.setor === cteFiltered.setor &&
+        (cteCached.cpfMotorista !== cteFiltered.cpfMotorista ||
+          cteCached.placaVeiculo !== cteFiltered.placaVeiculo)
     )
   );
 
