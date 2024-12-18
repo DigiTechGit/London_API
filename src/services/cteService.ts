@@ -60,8 +60,8 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     });
 
     const endTimeAPI = Date.now();
-    const durationAPI = (endTimeAPI - startTimeAPI) / 1000; 
-    
+    const durationAPI = (endTimeAPI - startTimeAPI) / 1000;
+
     let text = await response.text();
 
     const startTime = Date.now();
@@ -74,9 +74,46 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
 
     // Obter cache existente
     const cachedCtes = cacheCtes.get(UNIDADE) || [];
-    const ctesNovos = ctes.filter((cte: { chaveCTe: any; nroCTRC: any; }) => {
+
+    const existingCTEs = await prisma.ctes.findMany({
+      where: {
+        chaveCTe: { in: ctes.map((cte: { chaveCTe: any }) => cte.chaveCTe) },
+        listarCTE: false,
+      },
+    });
+
+    const existingCTEsSet = new Set(existingCTEs.map((cte) => cte.chaveCTe));
+    // Identificar e atualizar CTes que estavam marcados como listarCTE: false
+    await Promise.all(
+      ctes
+        .filter((cte: any) => existingCTEsSet.has(cte.chaveCTe))
+        .map(async (cte: any) => {
+          let motoristaData;
+          if (cte.cpfMotorista && cte.nomeMotorista) {
+            motoristaData = await prisma.motorista_ssw.upsert({
+              where: { cpf: cte.cpfMotorista },
+              update: {},
+              create: {
+                cpf: cte.cpfMotorista,
+                nome: cte.nomeMotorista,
+              },
+            });
+          }
+
+          await prisma.ctes.updateMany({
+            where: { chaveCTe: cte.chaveCTe,  nroCTRC: cte.nroCTRC},
+            data: { 
+              listarCTE: true, motoristaId: motoristaData?.id, codUltOco: cte.codUltOco,
+              placaVeiculo: cte.placaVeiculo,
+              statusId: 1, },
+          });
+        })
+    );
+
+    const ctesNovos = ctes.filter((cte: { chaveCTe: any; nroCTRC: any }) => {
       const existing = cachedCtes.find(
-        (cached: { chaveCTe: any; nroCTRC: any; }) => cached.chaveCTe === cte.chaveCTe && cached.nroCTRC === cte.nroCTRC
+        (cached: { chaveCTe: any; nroCTRC: any }) =>
+          cached.chaveCTe === cte.chaveCTe && cached.nroCTRC === cte.nroCTRC
       );
 
       if (existing) {
@@ -90,7 +127,8 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     });
 
     const ctesRemovidos = cachedCtes.filter(
-      (cached: { chaveCTe: any; }) => !ctes.some((cte: { chaveCTe: any; }) => cte.chaveCTe === cached.chaveCTe)
+      (cached: { chaveCTe: any }) =>
+        !ctes.some((cte: { chaveCTe: any }) => cte.chaveCTe === cached.chaveCTe)
     );
 
     // Atualizar os CTes que n�o est�o mais na API
@@ -117,17 +155,22 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
 
       const existingCTEs = await prisma.ctes.findMany({
         where: {
-          chaveCTe: { in: ctesNovos.map((cte: { chaveCTe: any; }) => cte.chaveCTe) },
+          chaveCTe: {
+            in: ctesNovos.map((cte: { chaveCTe: any }) => cte.chaveCTe),
+          },
         },
       });
-      const existingCTEsMap = new Map(existingCTEs.map((cte) => [cte.chaveCTe, cte]));
+      const existingCTEsMap = new Map(
+        existingCTEs.map((cte) => [cte.chaveCTe, cte])
+      );
 
       for (const cte of ctesNovos) {
         const existingCTE = existingCTEsMap.get(cte.chaveCTe);
 
         if (existingCTE) {
           if (
-            existingCTE.placaVeiculo.toUpperCase() !== cte.placaVeiculo.toUpperCase()
+            existingCTE.placaVeiculo.toUpperCase() !==
+            cte.placaVeiculo.toUpperCase()
           ) {
             let motoristaData;
             if (cte.cpfMotorista && cte.nomeMotorista) {
@@ -163,7 +206,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
           }
           atualizados++;
         } else {
-          const motoristaData =  await prisma.motorista_ssw.upsert({
+          const motoristaData = await prisma.motorista_ssw.upsert({
             where: { cpf: cte.cpfMotorista },
             update: {},
             create: {
@@ -263,7 +306,6 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
       `Foram inseridos ${criados} CTe(s) novos e atualizados ${atualizados} CTe(s) existentes`
     );
     console.log(`IDs dos CTes criados:`, idsCriados);
-
   } catch (error) {
     console.log("Erro ao buscar e salvar CTe:", error);
   }
@@ -318,10 +360,6 @@ export async function atualizarStatusCtes() {
     console.error("Erro ao atualizar status dos CTes:", error);
   }
 }
-
-
-
-
 
 export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
   try {
@@ -409,7 +447,7 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
         if (existingCTe) {
           if (
             existingCTe.placaVeiculo.toUpperCase() !=
-              cte.placaVeiculo.toUpperCase()
+            cte.placaVeiculo.toUpperCase()
           ) {
             let motoristaData;
             if (cte.cpfMotorista && cte.nomeMotorista) {
@@ -432,7 +470,7 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
                   placaVeiculo: cte.placaVeiculo,
                   statusId: 1,
                   motoristaId: motoristaData!.id,
-                  listarCTE: true
+                  listarCTE: true,
                 },
               })
             );
@@ -440,7 +478,12 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
             updatePromises.push(
               prisma.ctes.update({
                 where: { id: existingCTe.id },
-                data: { dt_alteracao, codUltOco: cte.codUltOco,  statusId: 1, listarCTE: true },
+                data: {
+                  dt_alteracao,
+                  codUltOco: cte.codUltOco,
+                  statusId: 1,
+                  listarCTE: true,
+                },
               })
             );
           }
@@ -501,18 +544,18 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
                   },
                 },
               },
-               NotaFiscal: {
-                 create: cte.notasFiscais.map((nota: any) => ({
-                   chaveNFe: nota.chave_nfe,
-                   serNF: nota.serNF,
-                   nroNF: nota.nroNF,
-                   nroPedido: nota.nroPedido,
-                   qtdeVolumes: nota.qtdeVolumes,
-                   pesoReal: nota.pesoReal,
-                   metragemCubica: nota.metragemCubica,
-                   valorMercadoria: nota.valorMercadoria,
-                 })),
-               },
+              NotaFiscal: {
+                create: cte.notasFiscais.map((nota: any) => ({
+                  chaveNFe: nota.chave_nfe,
+                  serNF: nota.serNF,
+                  nroNF: nota.nroNF,
+                  nroPedido: nota.nroPedido,
+                  qtdeVolumes: nota.qtdeVolumes,
+                  pesoReal: nota.pesoReal,
+                  metragemCubica: nota.metragemCubica,
+                  valorMercadoria: nota.valorMercadoria,
+                })),
+              },
               status: {
                 connect: {
                   id: 1,
@@ -545,4 +588,3 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
     console.log("Erro ao buscar e salvar CTe:", error);
   }
 }
-
