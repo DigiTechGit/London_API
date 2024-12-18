@@ -55,10 +55,8 @@ export async function AtualizarCtesRecorrente() {
 
     const authData = await authResponse.json();
     const token = authData.token;
-    console.log('Token gerado com sucesso.');
 
     // Encontre os CTEs que precisam ser atualizados
-    console.log('Buscando CTEs que precisam ser atualizados...');
     const ctesAtualizar = await prisma.ctes.findMany({
       where: {
         NotaFiscal: {
@@ -72,7 +70,6 @@ export async function AtualizarCtesRecorrente() {
         NotaFiscal: true,
       },
     });
-    console.log(`Foram encontrados ${ctesAtualizar.length} CTE(s) para atualizar.`);
 
     const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -88,12 +85,10 @@ export async function AtualizarCtesRecorrente() {
 
             try {
               if (contador >= 18) {
-                console.log('Atingido limite de requisições, aguardando 1 segundo...');
                 await delay(1000); // Respeitar o limite de requisições
                 contador = 0;
               }
 
-              console.log(`Enviando requisição para tracking da NF-e ${nota.chaveNFe}...`);
               const response = await fetch(url, {
                 method: "POST",
                 headers: {
@@ -105,10 +100,8 @@ export async function AtualizarCtesRecorrente() {
 
               contador++;
               contadorCTE ++;
-              console.log(`Foram encontrados ${ctesAtualizar.length} CTE(s) para atualizar. atualizando numero ${contadorCTE}`);
 
               if (!response.ok) {
-                console.error(`Erro ao processar CTe ${cte.id} com NF-e ${nota.chaveNFe}:`, response.statusText);
                 continue;
               }
 
@@ -124,9 +117,7 @@ export async function AtualizarCtesRecorrente() {
               const ocorrenciaTexto = ultimaOcorrencia.ocorrencia;
               const ocorrenciaData = ultimaOcorrencia.data_hora;
               const numeroOcorrencia = ocorrenciaTexto.match(/\((\d+)\)/)?.[1];
-              console.log(numeroOcorrencia, cte.codUltOco);
               if (numeroOcorrencia && cte.codUltOco != numeroOcorrencia) {
-                console.log(`Atualizando CTe ${cte.id} para a ocorrência ${numeroOcorrencia}...`);
                 await prisma.ctes.update({
                   where: { id: cte.id },
                   data: { codUltOco: parseInt(numeroOcorrencia), dt_alteracao: new Date(ocorrenciaData)},
@@ -137,7 +128,6 @@ export async function AtualizarCtesRecorrente() {
             }
           }
         } else {
-          console.log(`CTe ${cte.id} sem Nota Fiscal. Atualizando codUltOco para 0...`);
           await prisma.ctes.update({ where: { id: cte.id }, data: { codUltOco: 0 } });
         }
       }
