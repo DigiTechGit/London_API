@@ -14,6 +14,7 @@ import dadosUsuariosRoutes from './controllers/DadosUsuarioController';
 import fs from 'fs';
 import { AtualizarCtesRecorrente } from './services/RelatorioService';
 import RelatorioRoutes from './controllers/RelatorioController';
+import CNPJRoutes from './controllers/CnpjCorreiosController';
 
 let jobRunning = false; 
 let jobRelatorioRunning = false; 
@@ -57,6 +58,7 @@ const port =  3000;
 
 statusRoutes(fastify);
 motoristaRoutes(fastify, prisma);
+CNPJRoutes( fastify, prisma);
 cteRoutes(fastify, prisma);
 userRoutes(fastify, prisma);
 unidadeRoutes(fastify, prisma)
