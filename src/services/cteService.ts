@@ -73,6 +73,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     const cachedCtes = cacheCtes.get(UNIDADE) || [];
     let text = await response.text();
 
+
     const startTimeParsing = Date.now();
     text = text.replace(/"cep":(\d+)/g, (match, p1) => `"cep":"${p1}"`);
     let parsedData = JSON.parse(text);
@@ -88,6 +89,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
 
     // Atualizar cache
     cacheCtes.set(UNIDADE, filteredCTES);
+    if (cachedCtes.length === 0) return
 
     // Comparar e processar CTes
     const startTimeProcessing = Date.now();

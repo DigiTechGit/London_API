@@ -136,11 +136,11 @@ export default function RelatorioRoutes(
     }
   };
 
-  const relatorioMotorista = async (date: string) => {
+  const relatorioMotorista = async (from: string, to: string) => {
     try {
-      const dataInicio = dayjs(date).startOf("day");
-      const dataFim = dayjs(date).endOf("day");
-
+      const dataInicio = dayjs(from).startOf("day"); // Início do intervalo
+      const dataFim = dayjs(to).endOf("day"); // Fim do intervalo
+  
       const ctes = await prisma.ctes.findMany({
         where: {
           dt_alteracao: {
@@ -158,11 +158,11 @@ export default function RelatorioRoutes(
           codUltOco: true,
         },
       });
-
-      const entregaStatusCodes = new Set([1]);
-
+  
+      const entregaStatusCodes = new Set([1]); // Status que indicam entregas bem-sucedidas
+  
       const entregasPorMotorista: Record<string, RelatorioMotorista> = {};
-
+  
       ctes.forEach((cte) => {
         const motoristaNome = cte.motorista?.nome || "Desconhecido";
         if (!entregasPorMotorista[motoristaNome]) {
@@ -172,33 +172,37 @@ export default function RelatorioRoutes(
             naoEntregue: 0,
           };
         }
-
+  
         if (entregaStatusCodes.has(cte.codUltOco)) {
           entregasPorMotorista[motoristaNome].entregue += 1;
         } else {
           entregasPorMotorista[motoristaNome].naoEntregue += 1;
         }
       });
-
-      return Object.values(entregasPorMotorista); // Retorna uma lista com os dados por motorista
+  
+      return Object.values(entregasPorMotorista); // Retorna os dados agregados por motorista
     } catch (error) {
-      console.error(error);
-      return;
+      console.error("Erro ao gerar relatório do motorista:", error);
+      throw new Error("Falha ao gerar o relatório");
     }
   };
-
   fastify.get("/relatorio/motorista", async (request, reply) => {
     try {
-      const { data } = request.query as { data: string };
-      if (!data) {
-        return reply.status(400).send({ error: "Data é necessária" });
-      }
+      const { from, to } = request.query as { from?: string; to?: string };
 
-      const dados = await relatorioMotorista(data);
+      const ontem = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+
+      const startDate = from || ontem;
+      const endDate = to || ontem;
+
+      console.log(`Período selecionado: de ${startDate} a ${endDate}`);
+
+      const dados = await relatorioMotorista(startDate, endDate);
+
       reply.status(200).send(dados);
     } catch (error) {
       console.error(error);
-      reply.status(500).send({ error: "Failed to list CTe" });
+      reply.status(500).send({ error: "Erro ao listar CTe" });
     }
   });
 
