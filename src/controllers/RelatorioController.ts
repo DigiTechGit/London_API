@@ -141,7 +141,7 @@ export default function RelatorioRoutes(
     try {
       const dataInicio = dayjs(from).startOf("day"); // Início do intervalo
       const dataFim = dayjs(to).endOf("day"); // Fim do intervalo
-  
+
       const ctes = await prisma.ctes.findMany({
         where: {
           dt_alteracao: {
@@ -159,11 +159,11 @@ export default function RelatorioRoutes(
           codUltOco: true,
         },
       });
-  
+
       const entregaStatusCodes = new Set([1]); // Status que indicam entregas bem-sucedidas
-  
+
       const entregasPorMotorista: Record<string, RelatorioMotorista> = {};
-  
+
       ctes.forEach((cte) => {
         const motoristaNome = cte.motorista?.nome || "Desconhecido";
         if (!entregasPorMotorista[motoristaNome]) {
@@ -173,14 +173,14 @@ export default function RelatorioRoutes(
             naoEntregue: 0,
           };
         }
-  
+
         if (entregaStatusCodes.has(cte.codUltOco)) {
           entregasPorMotorista[motoristaNome].entregue += 1;
         } else {
           entregasPorMotorista[motoristaNome].naoEntregue += 1;
         }
       });
-  
+
       return Object.values(entregasPorMotorista); // Retorna os dados agregados por motorista
     } catch (error) {
       console.error("Erro ao gerar relatório do motorista:", error);
@@ -193,13 +193,13 @@ export default function RelatorioRoutes(
 
       const ontem = dayjs().subtract(1, "day").format("YYYY-MM-DD");
 
-      let endDate : string | undefined;
+      let endDate: string | undefined;
 
       const startDate = from || ontem;
 
-      if(to === 'undefined'){
+      if (to === "undefined") {
         endDate = startDate;
-      }else{
+      } else {
         endDate = to!;
       }
 
@@ -317,6 +317,7 @@ export default function RelatorioRoutes(
         const relatorio = await relatorioDiario(dataDia);
         resultadosMensais.push({
           dia: dataDia,
+          totalVolumes: relatorio!.totalVolumes,
           totalEntregues: relatorio!.totalEntregues,
           totalCarros: relatorio!.totalCarros,
         });
@@ -326,6 +327,46 @@ export default function RelatorioRoutes(
 
       return reply.status(200).send(resultadosMensais);
     } catch (error) {
+      return reply.status(500).send({ error: "Erro interno do servidor" });
+    }
+  });
+
+  fastify.post("/relatorio/mensal/salvar", async (request, reply) => {
+    try {
+      const {
+        data: date,
+        totalEntregas,
+        motoristasUnicos,
+        placasUnicas,
+      } = request.body as {
+        data: string;
+        totalEntregas: string;
+        motoristasUnicos: string;
+        placasUnicas: string;
+      };
+
+      // Usa slice para extrair partes da data
+      const day = parseInt(date.slice(0, 2)); // Pega os 2 primeiros caracteres (dia)
+      const month = parseInt(date.slice(2, 4)) - 1; // Pega os 2 seguintes (mês) - 1 porque o JS considera 0 como janeiro
+      const year = 2000 + parseInt(date.slice(4, 6)); // Pega os últimos 2 caracteres (ano) e ajusta para o ano 2000+
+
+      // Cria a data no formato correto
+      const parsedDate = new Date(year, month, day);
+
+      // Salva no banco
+      const response = await prisma.relatorioMensal.create({
+        data: {
+          data: parsedDate,
+          totalEntregas: totalEntregas.toString(),
+          motoristasUnicos: motoristasUnicos.toString(),
+          placasUnicas: placasUnicas.toString(),
+        },
+      });
+
+      console.log(response);
+      return reply.status(200).send();
+    } catch (error) {
+      console.error(error);
       return reply.status(500).send({ error: "Erro interno do servidor" });
     }
   });

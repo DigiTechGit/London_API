@@ -131,3 +131,11 @@ model NotaFiscal {
   ctesId Int
   ctes   Ctes @relation(fields: [ctesId], references: [id])
 }
+
+model RelatorioMensal {
+  id               Int      @id @default(autoincrement())
+  data             DateTime
+  totalEntregas    String
+  motoristasUnicos String
+  placasUnicas     String
+}
