@@ -370,4 +370,47 @@ export default function RelatorioRoutes(
       return reply.status(500).send({ error: "Erro interno do servidor" });
     }
   });
+
+  fastify.post("/relatorio/performance/salvar", async (request, reply) => {
+    try {
+      const {
+        data: date,
+        totalEntregue,
+        totalNaoEntregue,
+        placaMotorista,
+        nomeMotorista,
+      } = request.body as {
+        data: string;
+        totalEntregue: string;
+        totalNaoEntregue: string;
+        placaMotorista: string;
+        nomeMotorista: string;
+      };
+
+      // Usa slice para extrair partes da data
+      const day = parseInt(date.slice(0, 2)); // Pega os 2 primeiros caracteres (dia)
+      const month = parseInt(date.slice(2, 4)) - 1; // Pega os 2 seguintes (mês) - 1 porque o JS considera 0 como janeiro
+      const year = 2000 + parseInt(date.slice(4, 6)); // Pega os últimos 2 caracteres (ano) e ajusta para o ano 2000+
+
+      // Cria a data no formato correto
+      const parsedDate = new Date(year, month, day);
+
+      // Salva no banco
+      const response = await prisma.relatorioPerformance.create({
+        data: {
+          data: parsedDate,
+          totalEntregue: totalEntregue.toString(),
+          totalNaoEntregue: totalNaoEntregue.toString(),
+          nomeMotorista: nomeMotorista.toString(),
+          placaMotorista: placaMotorista.toString(),
+        },
+      });
+
+      console.log(response);
+      return reply.status(200).send();
+    } catch (error) {
+      console.error(error);
+      return reply.status(500).send({ error: "Erro interno do servidor" });
+    }
+  });
 }

@@ -139,3 +139,12 @@ model RelatorioMensal {
   motoristasUnicos String
   placasUnicas     String
 }
+
+model RelatorioPerformance {
+  id               Int      @id @default(autoincrement())
+  data             DateTime
+  totalEntregue    String
+  totalNaoEntregue String
+  nomeMotorista    String
+  placaMotorista   String
+}
