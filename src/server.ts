@@ -73,7 +73,7 @@ fastify.get('/', async (request, reply) => {
 
 cron.schedule('0 4 * * *', async () => {
   if (jobRunning) {
-    console.log(new Date().toISOString() + ' - O job já está em execução. Ignorando nova execução.');
+    // console.log(new Date().toISOString() + ' - O job já está em execução. Ignorando nova execução.');
     return;
   }
 
@@ -106,7 +106,7 @@ cron.schedule('0 4 * * *', async () => {
 
 cron.schedule('* * 5-23 * * *', async () => {
   if (jobRunning) {
-    console.log(new Date().toISOString() + ' - O job já está em execução. Ignorando nova execução.');
+    // console.log(new Date().toISOString() + ' - O job já está em execução. Ignorando nova execução.');
     return;
   }
 
@@ -117,16 +117,16 @@ cron.schedule('* * 5-23 * * *', async () => {
       },
     });
     jobRunning = true; 
-    console.log('Iniciando job de busca de CTe...');
+    // console.log('Iniciando job de busca de CTe...');
 
   const promessas = unidades.map(unidade => {
-    console.log(`Iniciando processamento da unidade: ${unidade.Unidade}`);
+    // console.log(`Iniciando processamento da unidade: ${unidade.Unidade}`);
     return buscarEInserirCtesRecorrente(unidade.Unidade);
   });
 
   // Executar todas as promessas em paralelo
   await Promise.all(promessas);
-  console.log('Job de busca de CTe concluído.');
+  // console.log('Job de busca de CTe concluído.');
 
   } catch (error) {
     console.error('Erro ao executar o job:', error);
@@ -138,7 +138,7 @@ cron.schedule('* * 5-23 * * *', async () => {
 
 cron.schedule('* * * * * *', async () => {
   if (jobRelatorioRunning) {
-    console.log(new Date().toISOString() + ' - O job Atualizar já está em execução. Ignorando nova execução.');
+    // console.log(new Date().toISOString() + ' - O job Atualizar já está em execução. Ignorando nova execução.');
     return;
   }
   try {

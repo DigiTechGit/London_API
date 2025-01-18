@@ -413,4 +413,64 @@ export default function RelatorioRoutes(
       return reply.status(500).send({ error: "Erro interno do servidor" });
     }
   });
+
+  fastify.post("/relatorio/mensal/listar", async (request, reply) => {
+    try {
+      const { data: date } = request.body as { data: string };
+  
+      // Extrai partes da data fornecida
+      const day = parseInt(date.slice(0, 2));
+      const month = parseInt(date.slice(2, 4)) - 1;
+      const year = 2000 + parseInt(date.slice(4, 6));
+  
+      // Define o intervalo de 00h00 até 23h59 do dia selecionado
+      const startDate = new Date(Date.UTC(year, month, day, 0, 0, 0));
+      const endDate = new Date(Date.UTC(year, month, day, 23, 59, 59));
+  
+      // Consulta no banco
+      const relatorios = await prisma.relatorioMensal.findMany({
+        where: {
+          data: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+      });
+  
+      return reply.status(200).send(relatorios);
+    } catch (error) {
+      console.error(error);
+      return reply.status(500).send({ error: "Erro interno do servidor" });
+    }
+  });
+  
+  fastify.post("/relatorio/performance/listar", async (request, reply) => {
+    try {
+      const { data: date } = request.body as { data: string };
+  
+      // Extrai partes da data fornecida
+      const day = parseInt(date.slice(0, 2));
+      const month = parseInt(date.slice(2, 4)) - 1;
+      const year = 2000 + parseInt(date.slice(4, 6));
+  
+      // Define o intervalo de 00h00 até 23h59 do dia selecionado
+      const startDate = new Date(Date.UTC(year, month, day, 0, 0, 0));
+      const endDate = new Date(Date.UTC(year, month, day, 23, 59, 59));
+  
+      // Consulta no banco
+      const relatorios = await prisma.relatorioPerformance.findMany({
+        where: {
+          data: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+      });
+  
+      return reply.status(200).send(relatorios);
+    } catch (error) {
+      console.error(error);
+      return reply.status(500).send({ error: "Erro interno do servidor" });
+    }
+  });      
 }
