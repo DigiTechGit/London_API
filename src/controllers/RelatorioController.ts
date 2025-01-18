@@ -1,6 +1,6 @@
-import { FastifyInstance } from "fastify";
 import { PrismaClient } from "@prisma/client";
 import dayjs from "dayjs";
+import { FastifyInstance } from "fastify";
 
 interface RelatorioMotorista {
   motorista: string;
@@ -126,6 +126,7 @@ export default function RelatorioRoutes(
       });
 
       return {
+        totalVolumes: ctes.length,
         totalEntregues,
         totalCarros,
         status: statusCount, // Retorna os números por status
@@ -192,8 +193,15 @@ export default function RelatorioRoutes(
 
       const ontem = dayjs().subtract(1, "day").format("YYYY-MM-DD");
 
+      let endDate : string | undefined;
+
       const startDate = from || ontem;
-      const endDate = to || ontem;
+
+      if(to === 'undefined'){
+        endDate = startDate;
+      }else{
+        endDate = to!;
+      }
 
       console.log(`Período selecionado: de ${startDate} a ${endDate}`);
 
@@ -253,6 +261,7 @@ export default function RelatorioRoutes(
 
         resultadosSemanais.push({
           dia: dataDia,
+          totalVolumes: relatorio!.totalVolumes,
           totalEntregues: relatorio!.totalEntregues,
           totalCarros: relatorio!.totalCarros,
         });
