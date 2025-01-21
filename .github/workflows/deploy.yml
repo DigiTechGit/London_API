@@ -1,0 +1,57 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Rodar testes
+        run: npm test
+
+  create-pr:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Criar Pull Request da Dev para Main
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: "dev"
+          destination_branch: "main"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pr_title: "🚀 Merge da branch Dev para Main"
+          pr_body: "Este PR foi criado automaticamente após os testes passarem com sucesso."
+
+  deploy:
+    needs: create-pr
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Conectar ao servidor via SSH e fazer deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /dados/london_romaneio/London_API
+            git pull origin main
+            npm install
+            pm2 restart all
