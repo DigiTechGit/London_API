@@ -371,6 +371,13 @@ export default function RelatorioRoutes(
     }
   });
 
+  function parseDateToDateTime(dateString: string) {
+    const [day, month, year] = dateString.split("/").map(Number);
+    // Adiciona 2000 ao ano se estiver no formato yy
+    const fullYear = year < 100 ? 2000 + year : year;
+    return new Date(fullYear, month - 1, day);
+  }
+
   fastify.post("/relatorio/performance/salvar", async (request, reply) => {
     try {
       const {
@@ -387,13 +394,13 @@ export default function RelatorioRoutes(
         nomeMotorista: string;
       };
 
-      // Usa slice para extrair partes da data
-      const day = parseInt(date.slice(0, 2)); // Pega os 2 primeiros caracteres (dia)
-      const month = parseInt(date.slice(2, 4)) - 1; // Pega os 2 seguintes (mês) - 1 porque o JS considera 0 como janeiro
-      const year = 2000 + parseInt(date.slice(4, 6)); // Pega os últimos 2 caracteres (ano) e ajusta para o ano 2000+
+      if (date === "") {
+        return reply.status(200).send();
+      }
 
+      // Usa slice para extrair partes da data
+      const parsedDate = parseDateToDateTime(date);
       // Cria a data no formato correto
-      const parsedDate = new Date(year, month, day);
 
       // Salva no banco
       const response = await prisma.relatorioPerformance.create({
@@ -417,16 +424,16 @@ export default function RelatorioRoutes(
   fastify.post("/relatorio/mensal/listar", async (request, reply) => {
     try {
       const { data: date } = request.body as { data: string };
-  
+
       // Extrai partes da data fornecida
       const day = parseInt(date.slice(0, 2));
       const month = parseInt(date.slice(2, 4)) - 1;
       const year = 2000 + parseInt(date.slice(4, 6));
-  
+
       // Define o intervalo de 00h00 até 23h59 do dia selecionado
       const startDate = new Date(Date.UTC(year, month, day, 0, 0, 0));
       const endDate = new Date(Date.UTC(year, month, day, 23, 59, 59));
-  
+
       // Consulta no banco
       const relatorios = await prisma.relatorioMensal.findMany({
         where: {
@@ -436,27 +443,27 @@ export default function RelatorioRoutes(
           },
         },
       });
-  
+
       return reply.status(200).send(relatorios);
     } catch (error) {
       console.error(error);
       return reply.status(500).send({ error: "Erro interno do servidor" });
     }
   });
-  
+
   fastify.post("/relatorio/performance/listar", async (request, reply) => {
     try {
       const { data: date } = request.body as { data: string };
-  
+
       // Extrai partes da data fornecida
       const day = parseInt(date.slice(0, 2));
       const month = parseInt(date.slice(2, 4)) - 1;
       const year = 2000 + parseInt(date.slice(4, 6));
-  
+
       // Define o intervalo de 00h00 até 23h59 do dia selecionado
       const startDate = new Date(Date.UTC(year, month, day, 0, 0, 0));
       const endDate = new Date(Date.UTC(year, month, day, 23, 59, 59));
-  
+
       // Consulta no banco
       const relatorios = await prisma.relatorioPerformance.findMany({
         where: {
@@ -466,11 +473,11 @@ export default function RelatorioRoutes(
           },
         },
       });
-  
+
       return reply.status(200).send(relatorios);
     } catch (error) {
       console.error(error);
       return reply.status(500).send({ error: "Erro interno do servidor" });
     }
-  });      
+  });
 }
