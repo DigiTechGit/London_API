@@ -142,51 +142,43 @@ export default function RelatorioRoutes(
       const dataInicio = dayjs(from).startOf("day"); // Início do intervalo
       const dataFim = dayjs(to).endOf("day"); // Fim do intervalo
 
-      const ctes = await prisma.ctes.findMany({
+      const relatorios = await prisma.relatorioPerformance.findMany({
         where: {
-          dt_alteracao: {
+          data: {
             gte: dataInicio.toDate(),
             lte: dataFim.toDate(),
           },
-          codUltOco: { gt: 0 },
-        },
-        select: {
-          motorista: {
-            select: {
-              nome: true,
-            },
-          },
-          codUltOco: true,
         },
       });
 
-      const entregaStatusCodes = new Set([1]); // Status que indicam entregas bem-sucedidas
-
+      // Objeto para armazenar dados agregados por motorista
       const entregasPorMotorista: Record<string, RelatorioMotorista> = {};
 
-      ctes.forEach((cte) => {
-        const motoristaNome = cte.motorista?.nome || "Desconhecido";
-        if (!entregasPorMotorista[motoristaNome]) {
-          entregasPorMotorista[motoristaNome] = {
-            motorista: motoristaNome,
+      relatorios.forEach((relatorio) => {
+        const { nomeMotorista, totalEntregue, totalNaoEntregue } = relatorio;
+
+        if (!entregasPorMotorista[nomeMotorista]) {
+          // Inicializa os dados do motorista, se ainda não estiver no objeto
+          entregasPorMotorista[nomeMotorista] = {
+            motorista: nomeMotorista,
             entregue: 0,
             naoEntregue: 0,
           };
         }
 
-        if (entregaStatusCodes.has(cte.codUltOco)) {
-          entregasPorMotorista[motoristaNome].entregue += 1;
-        } else {
-          entregasPorMotorista[motoristaNome].naoEntregue += 1;
-        }
+        // Converte os valores para números (caso venham como strings)
+        entregasPorMotorista[nomeMotorista].entregue += Number(totalEntregue);
+        entregasPorMotorista[nomeMotorista].naoEntregue += Number(totalNaoEntregue);
       });
 
-      return Object.values(entregasPorMotorista); // Retorna os dados agregados por motorista
+      // Retorna os dados agregados por motorista como uma lista
+      return Object.values(entregasPorMotorista);
     } catch (error) {
       console.error("Erro ao gerar relatório do motorista:", error);
       throw new Error("Falha ao gerar o relatório");
     }
   };
+
   fastify.get("/relatorio/motorista", async (request, reply) => {
     try {
       const { from, to } = request.query as { from?: string; to?: string };
@@ -421,25 +413,83 @@ export default function RelatorioRoutes(
     }
   });
 
-  fastify.post("/relatorio/mensal/listar", async (request, reply) => {
+  fastify.post("/relatorio/performance/salvar/diario", async (request, reply) => {
     try {
-      const { data: date } = request.body as { data: string };
+      const {
+        data: date,
+        totalEntregue,
+        totalNaoEntregue,
+        placaMotorista,
+        nomeMotorista,
+      } = request.body as {
+        data: string;
+        totalEntregue: string;
+        totalNaoEntregue: string;
+        placaMotorista: string;
+        nomeMotorista: string;
+      };
 
-      // Extrai partes da data fornecida
-      const day = parseInt(date.slice(0, 2));
-      const month = parseInt(date.slice(2, 4)) - 1;
-      const year = 2000 + parseInt(date.slice(4, 6));
+      if (date === "") {
+        return reply.status(200).send();
+      }
 
-      // Define o intervalo de 00h00 até 23h59 do dia selecionado
-      const startDate = new Date(Date.UTC(year, month, day, 0, 0, 0));
-      const endDate = new Date(Date.UTC(year, month, day, 23, 59, 59));
+      // Usa slice para extrair partes da data
+      const parsedDate = parseDateToDateTime(date);
+      // Cria a data no formato correto
+
+      // Salva no banco
+      await prisma.relatorioPerformance.deleteMany({where: {data: parsedDate, nomeMotorista: nomeMotorista, placaMotorista: placaMotorista}});
+
+      const response = await prisma.relatorioPerformance.create({
+        data: {
+          data: parsedDate,
+          totalEntregue: totalEntregue.toString(),
+          totalNaoEntregue: totalNaoEntregue.toString(),
+          nomeMotorista: nomeMotorista.toString(),
+          placaMotorista: placaMotorista.toString(),
+        },
+      });
+
+      console.log(response);
+      return reply.status(200).send();
+    } catch (error) {
+      console.error(error);
+      return reply.status(500).send({ error: "Erro interno do servidor" });
+    }
+  });
+
+  fastify.get("/relatorio/mensal/listar", async (request, reply) => {
+    try {
+      const { mes, ano } = request.query as { mes: string; ano: string }; // Supondo que a data seja fornecida como 'mes' e 'ano' na query
+      // Verifica se o mês e ano foram fornecidos
+      if (!mes || !ano) {
+        return reply.status(400).send({ error: "Mês e ano são necessários" });
+      }
+
+      // Converte mês e ano para números
+      const mesNumero = parseInt(mes, 10);
+      const anoNumero = parseInt(ano, 10);
+
+      // Verifica se o mês está no intervalo correto
+      if (mesNumero < 1 || mesNumero > 12) {
+        return reply.status(400).send({ error: "Mês inválido" });
+      }
+
+      const primeiroDiaDoMes = dayjs(new Date(anoNumero, mesNumero - 1, 1)); // Primeiro dia do mês
+
+      // Calcula o último dia do mês ou o dia de ontem caso o mês seja o atual
+      const hoje = dayjs();
+      const ultimoDiaDoMes =
+        hoje.month() + 1 === mesNumero && hoje.year() === anoNumero
+          ? hoje.subtract(1, "day")
+          : primeiroDiaDoMes.endOf("month");
 
       // Consulta no banco
       const relatorios = await prisma.relatorioMensal.findMany({
         where: {
           data: {
-            gte: startDate,
-            lte: endDate,
+            gte: primeiroDiaDoMes.toDate(),
+            lte: ultimoDiaDoMes.toDate(),
           },
         },
       });
@@ -451,33 +501,30 @@ export default function RelatorioRoutes(
     }
   });
 
-  fastify.post("/relatorio/performance/listar", async (request, reply) => {
+  fastify.get("/relatorio/performance/listar", async (request, reply) => {
     try {
-      const { data: date } = request.body as { data: string };
+      const { from, to } = request.query as { from?: string; to?: string };
 
-      // Extrai partes da data fornecida
-      const day = parseInt(date.slice(0, 2));
-      const month = parseInt(date.slice(2, 4)) - 1;
-      const year = 2000 + parseInt(date.slice(4, 6));
+      const ontem = dayjs().format("YYYY-MM-DD");
 
-      // Define o intervalo de 00h00 até 23h59 do dia selecionado
-      const startDate = new Date(Date.UTC(year, month, day, 0, 0, 0));
-      const endDate = new Date(Date.UTC(year, month, day, 23, 59, 59));
+      let endDate: string | undefined;
 
-      // Consulta no banco
-      const relatorios = await prisma.relatorioPerformance.findMany({
-        where: {
-          data: {
-            gte: startDate,
-            lte: endDate,
-          },
-        },
-      });
+      const startDate = from || ontem;
 
-      return reply.status(200).send(relatorios);
+      if (!to || to === "undefined") {
+        endDate = startDate;
+      } else {
+        endDate = to!;
+      }
+
+      console.log(`Período selecionado: de ${startDate} a ${endDate}`);
+
+      const dados = await relatorioMotorista(startDate, endDate);
+
+      reply.status(200).send(dados);
     } catch (error) {
       console.error(error);
-      return reply.status(500).send({ error: "Erro interno do servidor" });
+      reply.status(500).send({ error: "Erro ao listar CTe" });
     }
   });
 }
