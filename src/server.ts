@@ -68,7 +68,7 @@ RouteRomaneioStockfy(fastify, prisma);
 circuitController(fastify, prisma);
 
 fastify.get('/', async (request, reply) => {
-  reply.send({ status: new Date().toISOString() + ' - Servidor rodando corretamente versão 1.1' });
+  reply.send({ status: new Date().toISOString() + ' - Servidor rodando corretamente versão 1.2' });
 });
 
 cron.schedule('0 4 * * *', async () => {

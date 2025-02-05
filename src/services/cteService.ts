@@ -22,12 +22,12 @@ async function GenerateToken() {
   });
 
   const camposFaltantes = camposNecessarios.filter(
-    (campo) => !(campo in authDados)
+    (campo) => !(campo in authDados),
   );
 
   if (camposFaltantes.length > 0) {
     console.log(
-      `Os seguintes campos estão faltando: ${camposFaltantes.join(", ")}`
+      `Os seguintes campos estão faltando: ${camposFaltantes.join(", ")}`,
     );
     return;
   }
@@ -73,7 +73,6 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     const cachedCtes = cacheCtes.get(UNIDADE) || [];
     let text = await response.text();
 
-
     const startTimeParsing = Date.now();
     text = text.replace(/"cep":(\d+)/g, (match, p1) => `"cep":"${p1}"`);
     let parsedData = JSON.parse(text);
@@ -89,13 +88,13 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
 
     // Atualizar cache
     cacheCtes.set(UNIDADE, filteredCTES);
-    if (cachedCtes.length === 0) return
+    if (cachedCtes.length === 0) return;
 
     // Comparar e processar CTes
     const startTimeProcessing = Date.now();
     const { novos, removidos, modificados } = compararCtes(
       cachedCtes,
-      filteredCTES
+      filteredCTES,
     );
 
     const adicionados = await adicionarCTEs(novos, UNIDADE);
@@ -211,7 +210,7 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
                   motoristaId: motoristaData!.id,
                   listarCTE: true,
                 },
-              })
+              }),
             );
           } else {
             updatePromises.push(
@@ -223,7 +222,7 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
                   statusId: 1,
                   listarCTE: true,
                 },
-              })
+              }),
             );
           }
           atualizados++;
@@ -321,7 +320,7 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
     });
 
     console.log(
-      `Foram inseridos ${criados} CTe(s) novos e atualizados ${atualizados} CTe(s) existentes`
+      `Foram inseridos ${criados} CTe(s) novos e atualizados ${atualizados} CTe(s) existentes`,
     );
   } catch (error) {
     console.log("Erro ao buscar e salvar CTe:", error);
@@ -360,22 +359,45 @@ async function adicionarCTEs(ctes: CTES[], UNIDADE: string) {
       },
     });
 
-    const recebedorData = await prisma.recebedor.upsert({
+    const recebedorExistente = await prisma.recebedor.findMany({
       where: { cnpjCPF: cte.recebedor.cnpjCPF },
-      update: {},
-      create: {
-        cnpjCPF: cte.recebedor.cnpjCPF,
-        nome: cte.recebedor.nome,
-        tipo: cte.recebedor.tipo,
-        endereco: cte.recebedor.endereco,
-        numero: cte.recebedor.numero,
-        bairro: cte.recebedor.bairro,
-        cep: cte.recebedor.cep.toString(),
-        cidade: cte.recebedor.cidade,
-        uf: cte.recebedor.uf,
-        foneContato: cte.recebedor.foneContato,
-      },
     });
+    
+    const registroIgual = recebedorExistente.find(
+      (recebedor) =>
+        recebedor.nome === cte.recebedor.nome &&
+        recebedor.tipo === cte.recebedor.tipo &&
+        recebedor.endereco === cte.recebedor.endereco &&
+        recebedor.numero === cte.recebedor.numero &&
+        recebedor.bairro === cte.recebedor.bairro &&
+        recebedor.cep === cte.recebedor.cep.toString() &&
+        recebedor.cidade === cte.recebedor.cidade &&
+        recebedor.uf === cte.recebedor.uf &&
+        recebedor.foneContato === cte.recebedor.foneContato
+    );
+    
+    let recebedorId: number; 
+    
+    if (registroIgual) {
+      recebedorId = registroIgual.id; 
+    } else {
+      const novoRecebedor = await prisma.recebedor.create({
+        data: {
+          cnpjCPF: cte.recebedor.cnpjCPF, 
+          nome: cte.recebedor.nome,
+          tipo: cte.recebedor.tipo,
+          endereco: cte.recebedor.endereco,
+          numero: cte.recebedor.numero,
+          bairro: cte.recebedor.bairro,
+          cep: cte.recebedor.cep.toString(),
+          cidade: cte.recebedor.cidade,
+          uf: cte.recebedor.uf,
+          foneContato: cte.recebedor.foneContato,
+        },
+      });
+    
+      recebedorId = novoRecebedor.id;
+    }
 
     await prisma.ctes.create({
       data: {
@@ -390,7 +412,7 @@ async function adicionarCTEs(ctes: CTES[], UNIDADE: string) {
         motoristaId: motoristaData.id,
         remetenteId: remetenteData.id,
         destinatarioId: destinatarioData.id,
-        recebedorId: recebedorData.id,
+        recebedorId: recebedorId,
         statusId: 1,
         listarCTE: true,
         NotaFiscal: {
@@ -468,7 +490,7 @@ function filtroCTEsDuplicadas(ctes: CTES[]) {
         cte.nroCTRC === current.nroCTRC &&
         cte.valorFrete === current.valorFrete &&
         cte.valorImpostoCTRC === current.valorImpostoCTRC &&
-        cte.setor === current.setor
+        cte.setor === current.setor,
     );
 
     if (existing) {
@@ -482,7 +504,7 @@ function filtroCTEsDuplicadas(ctes: CTES[]) {
               cte.valorFrete === current.valorFrete &&
               cte.valorImpostoCTRC === current.valorImpostoCTRC &&
               cte.setor === current.setor
-            )
+            ),
         );
         acc.push(current);
       }
@@ -504,8 +526,8 @@ function compararCtes(cachedCtes: CTES[], filteredCTES: CTES[]) {
           cteCached.chaveCTe === cteFiltered.chaveCTe &&
           cteCached.serCTRC === cteFiltered.serCTRC &&
           cteCached.nroCTRC === cteFiltered.nroCTRC &&
-          cteCached.setor === cteFiltered.setor
-      )
+          cteCached.setor === cteFiltered.setor,
+      ),
   );
 
   const removidos = cachedCtes.filter(
@@ -515,8 +537,8 @@ function compararCtes(cachedCtes: CTES[], filteredCTES: CTES[]) {
           cteCached.chaveCTe === cteFiltered.chaveCTe &&
           cteCached.serCTRC === cteFiltered.serCTRC &&
           cteCached.nroCTRC === cteFiltered.nroCTRC &&
-          cteCached.setor === cteFiltered.setor
-      )
+          cteCached.setor === cteFiltered.setor,
+      ),
   );
 
   const modificados = filteredCTES.filter((cteFiltered) =>
@@ -527,8 +549,8 @@ function compararCtes(cachedCtes: CTES[], filteredCTES: CTES[]) {
         cteCached.nroCTRC === cteFiltered.nroCTRC &&
         cteCached.setor === cteFiltered.setor &&
         (cteCached.cpfMotorista !== cteFiltered.cpfMotorista ||
-          cteCached.placaVeiculo !== cteFiltered.placaVeiculo)
-    )
+          cteCached.placaVeiculo !== cteFiltered.placaVeiculo),
+    ),
   );
 
   return { novos, removidos, modificados };
