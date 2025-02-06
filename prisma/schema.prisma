@@ -70,7 +70,7 @@ model Destinatario {
 
 model Recebedor {
   id          Int     @id @default(autoincrement())
-  cnpjCPF     String  @unique
+  cnpjCPF     String
   tipo        String?
   nome        String
   endereco    String

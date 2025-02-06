@@ -26,9 +26,6 @@ async function GenerateToken() {
   );
 
   if (camposFaltantes.length > 0) {
-    console.log(
-      `Os seguintes campos estão faltando: ${camposFaltantes.join(", ")}`,
-    );
     return;
   }
 
@@ -72,20 +69,19 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     // Processar resposta da API
     const cachedCtes = cacheCtes.get(UNIDADE) || [];
     let text = await response.text();
-
     const startTimeParsing = Date.now();
     text = text.replace(/"cep":(\d+)/g, (match, p1) => `"cep":"${p1}"`);
     let parsedData = JSON.parse(text);
     const endTimeParsing = Date.now();
     const durationParsing = (endTimeParsing - startTimeParsing) / 1000;
-
+    
     // Filtrar CTes duplicadas
     const startTimeFiltering = Date.now();
     const ctes: CTES[] = parsedData?.ctes ?? [];
     const filteredCTES = await filtroCTEsDuplicadas(ctes);
     const endTimeFiltering = Date.now();
     const durationFiltering = (endTimeFiltering - startTimeFiltering) / 1000;
-
+    
     // Atualizar cache
     cacheCtes.set(UNIDADE, filteredCTES);
     if (cachedCtes.length === 0) return;
@@ -96,7 +92,7 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
       cachedCtes,
       filteredCTES,
     );
-
+  
     const adicionados = await adicionarCTEs(novos, UNIDADE);
     const CTESremovidos = await removerCTEs(removidos, UNIDADE);
     const atualizados = await atualizarCTEs(modificados, UNIDADE);
@@ -109,15 +105,15 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     const dt_alteracao = new Date();
 
     // Log detalhado
-    console.log(`Log do processo de CTes para a unidade ${UNIDADE}:
-    - Tempo total: ${durationTotal} segundos
-    - Chamada à API: ${durationAPI} segundos
-    - Parsing da resposta: ${durationParsing} segundos
-    - Filtragem de CTes duplicados: ${durationFiltering} segundos
-    - Processamento de CTes (adicionar, remover, atualizar): ${durationProcessing} segundos
-    - CTes adicionados: ${adicionados}
-    - CTes removidos: ${removidos.length}
-    - CTes atualizados: ${modificados.length}`);
+    // console.log(`Log do processo de CTes para a unidade ${UNIDADE}:
+    // - Tempo total: ${durationTotal} segundos
+    // - Chamada à API: ${durationAPI} segundos
+    // - Parsing da resposta: ${durationParsing} segundos
+    // - Filtragem de CTes duplicados: ${durationFiltering} segundos
+    // - Processamento de CTes (adicionar, remover, atualizar): ${durationProcessing} segundos
+    // - CTes adicionados: ${adicionados}
+    // - CTes removidos: ${removidos.length}
+    // - CTes atualizados: ${modificados.length}`);
     await prisma.log.create({
       data: {
         desc: `Log do processo de CTes para a unidade ${UNIDADE}:
@@ -227,6 +223,33 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
           }
           atualizados++;
         } else {
+          let recebedor = await prisma.recebedor.findFirst({
+            where: {
+              cnpjCPF: cte.recebedor.cnpjCPF,
+              nome: cte.recebedor.nome,
+              endereco: cte.recebedor.endereco,
+              cep: cte.recebedor.cep,
+              numero: cte.recebedor.numero,
+            },
+          });
+        
+          if (!recebedor) {
+            recebedor = await prisma.recebedor.create({
+              data: {
+                cnpjCPF: cte.recebedor.cnpjCPF,
+                nome: cte.recebedor.nome,
+                tipo: cte.recebedor.tipo,
+                endereco: cte.recebedor.endereco,
+                numero: cte.recebedor.numero,
+                bairro: cte.recebedor.bairro,
+                cep: cte.recebedor.cep,
+                cidade: cte.recebedor.cidade,
+                uf: cte.recebedor.uf,
+                foneContato: cte.recebedor.foneContato,
+              },
+            });
+          }
+        
           await prisma.ctes.create({
             data: {
               chaveCTe: cte.chaveCTe,
@@ -266,21 +289,7 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
                 },
               },
               recebedor: {
-                connectOrCreate: {
-                  where: { cnpjCPF: cte.recebedor.cnpjCPF },
-                  create: {
-                    cnpjCPF: cte.recebedor.cnpjCPF,
-                    nome: cte.recebedor.nome,
-                    tipo: cte.recebedor.tipo,
-                    endereco: cte.recebedor.endereco,
-                    numero: cte.recebedor.numero,
-                    bairro: cte.recebedor.bairro,
-                    cep: cte.recebedor.cep,
-                    cidade: cte.recebedor.cidade,
-                    uf: cte.recebedor.uf,
-                    foneContato: cte.recebedor.foneContato,
-                  },
-                },
+                connect: { id: recebedor.id }
               },
               NotaFiscal: {
                 create: cte.notasFiscais.map((nota: any) => ({
@@ -318,10 +327,6 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
         createdAt: dt_alteracao,
       },
     });
-
-    console.log(
-      `Foram inseridos ${criados} CTe(s) novos e atualizados ${atualizados} CTe(s) existentes`,
-    );
   } catch (error) {
     console.log("Erro ao buscar e salvar CTe:", error);
   }
