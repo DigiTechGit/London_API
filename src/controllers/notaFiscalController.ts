@@ -1,0 +1,272 @@
+import fastify, {
+  FastifyInstance,
+  FastifyReply,
+  FastifyRequest,
+} from "fastify";
+import { PrismaClient } from "@prisma/client";
+
+const headers = new Headers();
+headers.append("Content-Type", "application/json");
+
+const PDFDocument = require("pdfkit");
+const bwipjs = require("bwip-js");
+
+export default function notaFiscalController(
+  fastify: FastifyInstance,
+  prisma: PrismaClient,
+) {
+  fastify.get(
+    "/notaFiscal/listarPorPlaca",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { placa } = request.query as { placa: string };
+
+        const ctesMotorista = await prisma.ctes.findMany({
+          where: {
+            placaVeiculo: placa,
+			listarCTE: true,
+			codUltOco: 85,
+          },
+		  include: {
+			motorista: true,
+			NotaFiscal: true,
+			remetente: true,
+			destinatario: true,
+			recebedor: true,
+		  },
+        });
+		console.log(ctesMotorista);
+        let motorista: any = "";
+
+        const nFEs = await Promise.all(
+			ctesMotorista.map(async (cte) => {
+            if (motorista == "") {
+              motorista = {
+                ...cte.motorista,
+                placa: placa,
+              };
+            }
+
+            const objNFe = cte.NotaFiscal.map((nfe: any) => ({
+              chaveNfe: nfe.chaveNFe,
+              nrNfre: nfe.nroNF,
+              qtdeVolumes: nfe.qtdeVolumes,
+              remetente: cte.remetente.nome,
+              prevEntrega: cte.previsaoEntrega,
+              destinatario: cte.destinatario.nome,
+              bairro: cte.recebedor.bairro,
+              cep: cte.recebedor.cep,
+              endereco: cte.recebedor.endereco,
+              numero: cte.recebedor.numero,
+              cidade: cte.recebedor.cidade,
+              uf: cte.recebedor.uf,
+              ctesPorParada: ctesMotorista.filter(
+                (ctePorParada: any) => ctePorParada.cte === cte.id,
+              ),
+            }));
+            return objNFe;
+          }),
+        );
+
+        const res = {
+          motorista: motorista,
+          Nfes: nFEs,
+        };
+
+        const base64PDF = await generatePDF(res);
+
+        reply.code(200).send({ pdfBase64: base64PDF });
+      } catch (error: any) {
+        reply.code(500).send({ error: error.message });
+      }
+    },
+  );
+
+  const generatePDF = async (data: any) => {
+    const doc = new PDFDocument({ margin: 30 });
+    let buffers: any = [];
+    const motorista = data.motorista;
+    const Nfes = data.Nfes;
+    let currentPage = 1;
+    // Adiciona buffers para armazenar o conteúdo do PDF
+    doc.on("data", buffers.push.bind(buffers));
+
+    // Finaliza o PDF e concatena os buffers
+    doc.on("end", () => {
+      console.log("PDF gerado");
+    });
+
+    doc
+      .fontSize(7)
+      .text(`PLACA: ${motorista.placa}`, { continued: true, align: "left" })
+      .text(` CPF: ${cpfMask(data.motorista.cpf)}`, {
+        continued: true,
+        align: "left",
+      })
+      .text(` NOME: ${data.motorista.nome}`, {
+        continued: true,
+        align: "left",
+      });
+    doc.moveDown(2);
+    doc
+      .moveTo(doc.page.margins.left, doc.y)
+      .lineTo(doc.page.width - doc.page.margins.right, doc.y)
+      .stroke();
+    doc.moveDown(2);
+    // Loop pelas paradas
+    for (let i = 0; i < Nfes.length; i++) {
+      const indice = i + 1;
+      const stops = Nfes[i];
+
+      for (const stop of stops) {
+        // Título
+        if (currentPage > 1) doc.moveDown(2);
+
+        doc
+          .fontSize(7)
+          .text(`NF: ${stop.nrNfre}`, { continued: true })
+          .fontSize(7)
+          .text(` REMETENTE: ${stop.remetente}`, {
+            continued: true,
+            align: "center",
+          })
+          .fontSize(7)
+          .text(` PREVISÃO ENTREGA: ${stop.prevEntrega}`, { align: "right" });
+        doc.moveDown(0.5);
+        doc
+          .fontSize(7)
+          .text(`QTD VOLUMES: ${stop.qtdeVolumes}`, { align: "left" });
+
+        doc.fontSize(7).text(`DESTINATÁRIO: ${stop.destinatario}`);
+        doc.moveDown(0.5);
+
+        doc.fontSize(7).text(`BAIRRO: ${stop.bairro}`, { align: "left" });
+        if (stop.chaveNfe) {
+          const barcodeBuffer = await generateBarcode(stop.chaveNfe);
+          doc.image(
+            barcodeBuffer,
+            doc.page.width - doc.page.margins.right - 200,
+            doc.y - 20,
+            {
+              fit: [200, 80], // Novo tamanho do código de barras
+              align: "right", // Mantém à direita
+              valign: "top", // Alinha no topo
+            },
+          );
+        }
+        doc.moveDown(0.5);
+
+        doc
+          .fontSize(7)
+          .text(`CEP: ${stop.cep}`, { continued: true, align: "left" })
+          .fontSize(7)
+          .text(` ${stop.cidade} / ${stop.uf}`);
+        doc.moveDown(0.5);
+
+        doc.fontSize(7).text(`ENDEREÇO: ${stop.endereco} ${stop.numero}`);
+        doc.moveDown(1);
+
+        // Reduz o tamanho da linha, deixando-a mais curta
+        const lineWidth = 100; // Largura da linha menor
+        doc
+          .moveTo(
+            doc.page.width - doc.page.margins.right - lineWidth,
+            doc.y - 2,
+          )
+          .lineTo(doc.page.width - doc.page.margins.right, doc.y - 2)
+          .stroke();
+        doc.fontSize(7).text(`DATA`, { align: "right" });
+        doc.moveDown(2);
+
+        const lineWidthRecebedor = 120; // Defina o tamanho desejado da linha
+        doc
+          .moveTo(doc.page.margins.left, doc.y - 2)
+          .lineTo(doc.page.margins.left + lineWidthRecebedor, doc.y - 2)
+          .stroke();
+        doc.fontSize(7).text(`RECEBEDOR`, { continued: true, align: "left" });
+
+        // Linha e texto para "DOCUMENTO"
+        const lineWidthDocumento = 120; // Defina o tamanho desejado da linha
+        const offset = 20; // Ajuste para mover o traço à direita
+        doc
+          .moveTo(
+            doc.page.width / 2 - lineWidthDocumento / 2 + offset,
+            doc.y - 2,
+          ) // Centraliza e ajusta para a direita
+          .lineTo(
+            doc.page.width / 2 + lineWidthDocumento / 2 + offset,
+            doc.y - 2,
+          )
+          .stroke();
+        doc.fontSize(7).text(`DOCUMENTO`, { continued: true, align: "center" });
+
+        // Linha e texto para "GRAU DE PARENTESCO"
+        const lineWidthParentesco = 120; // Defina o tamanho desejado da linha
+        doc
+          .moveTo(
+            doc.page.width - doc.page.margins.right - lineWidthParentesco,
+            doc.y - 2,
+          )
+          .lineTo(doc.page.width - doc.page.margins.right, doc.y - 2)
+          .stroke();
+        doc.fontSize(7).text(`GRAU DE PARENTESCO`, { align: "right" });
+
+        doc.moveDown(3); // Espaço extra após a linha
+        doc
+          .moveTo(doc.page.margins.left, doc.y)
+          .lineTo(doc.page.width - doc.page.margins.right, doc.y)
+          .stroke();
+        doc.moveDown(3); // Espaço extra após a linha
+      }
+
+      if (indice % 4 === 0) {
+        doc
+          .fontSize(7)
+          .text(`Página ${currentPage}`, {
+            align: "center",
+            baseline: "bottom",
+          });
+        if (indice < Nfes.length) doc.addPage();
+
+        currentPage++;
+      }
+    }
+
+    // Finalizar o documento
+    doc.end();
+
+    // Retorna o PDF como base64
+    return new Promise((resolve, reject) => {
+      doc.on("end", () => {
+        const pdfBuffer = Buffer.concat(buffers);
+        const base64PDF = pdfBuffer.toString("base64");
+        resolve(base64PDF);
+      });
+
+      doc.on("error", reject);
+    });
+  };
+
+  const generateBarcode = async (text: any) => {
+    return new Promise((resolve, reject) => {
+      bwipjs.toBuffer(
+        {
+          bcid: "code128", // Tipo de código de barras
+          text: text, // Texto para codificar
+          scale: 2, // Escala do código de barras
+          height: 10, // Altura
+          includetext: true, // Incluir texto abaixo
+          textxalign: "center", // Centralizar texto
+        },
+        (err: any, png: any) => {
+          if (err) return reject(err);
+          resolve(png);
+        },
+      );
+    });
+  };
+
+  const cpfMask = (cpf: string) => {
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  };
+}
