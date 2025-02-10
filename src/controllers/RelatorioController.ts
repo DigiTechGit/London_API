@@ -492,6 +492,9 @@ export default function RelatorioRoutes(
             lte: ultimoDiaDoMes.toDate(),
           },
         },
+        orderBy: {
+          data: "asc",
+        },
       });
 
       return reply.status(200).send(relatorios);
