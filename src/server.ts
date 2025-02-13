@@ -15,7 +15,7 @@ import fs from 'fs';
 import { AtualizarCtesRecorrente } from './services/RelatorioService';
 import RelatorioRoutes from './controllers/RelatorioController';
 import CNPJRoutes from './controllers/CnpjCorreiosController';
-import notaFiscalController from './controllers/NotaFiscalController';
+import notaFiscalController from './controllers/notaFiscalController';
 
 let jobRunning = false; 
 let jobRelatorioRunning = false; 

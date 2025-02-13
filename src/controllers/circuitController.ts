@@ -12,6 +12,7 @@ headers.append('Authorization', `Basic ${btoa(`${apiKey}:`)}`);
 const PDFDocument = require('pdfkit');
 const bwipjs = require('bwip-js');
 const fs = require('fs');
+const QRCode = require('qrcode')
 
 export default function circuitController
 (
@@ -375,7 +376,7 @@ export default function circuitController
 
     doc.fontSize(7).text(`PLACA: ${motorista.placa}`, { continued: true, align: 'left' })
       .text(` CPF: ${cpfMask(data.motorista.cpf)}`, { continued: true, align: 'left' })
-      .text(` NOME: ${data.motorista.nome}`, { continued: true, align: 'left' });
+      .text(` NOME: ${data.motorista.nome}`, { align: 'left' });
       doc.moveDown(2);
     doc.moveTo(doc.page.margins.left, doc.y)
     .lineTo(doc.page.width - doc.page.margins.right, doc.y)
@@ -388,8 +389,6 @@ export default function circuitController
   
       for (const stop of stops) {
         // Título
-        if(currentPage > 1) doc.moveDown(2);
-
         doc.fontSize(7).text(`ORDEM: ${stop.ctesPorParada[0].posicao}`, { align: 'left' });
         doc.fontSize(7).text(`NF: ${stop.nrNfre}`, { continued: true })
           .fontSize(7).text(` REMETENTE: ${stop.remetente}`, { continued: true, align: 'center' })
@@ -400,8 +399,21 @@ export default function circuitController
         doc.fontSize(7).text(`DESTINATÁRIO: ${stop.destinatario}`);
         doc.moveDown(0.5);
 
+        doc.fontSize(7).text(`TELEFONE: ${stop.telefone}`);
+        doc.moveDown(0.5);
+
         doc.fontSize(7).text(`BAIRRO: ${stop.bairro}`, { align: 'left' });
         if (stop.chaveNfe) {
+          const qrCodeBuffer = await generateQRCode(stop.chaveNfe);
+          doc.image(qrCodeBuffer,
+            doc.page.width - doc.page.margins.right - 300,
+            doc.y  - 30, 
+            {
+            fit: [60, 60], // Tamanho do QR Code
+            align: "center",
+            valign: "top",
+          });
+
           const barcodeBuffer = await generateBarcode(stop.chaveNfe);
           doc.image(barcodeBuffer, doc.page.width - doc.page.margins.right - 200, doc.y - 20, {
               fit: [200, 80], // Novo tamanho do código de barras
@@ -416,6 +428,7 @@ export default function circuitController
         doc.moveDown(0.5);
 
         doc.fontSize(7).text(`ENDEREÇO: ${stop.endereco} ${stop.numero}`);
+        doc.fontSize(7).text(`COMPL: ${stop.endereco} ${stop.numero}`);
         doc.moveDown(1);
 
         // Reduz o tamanho da linha, deixando-a mais curta
@@ -448,14 +461,14 @@ export default function circuitController
           .stroke();
         doc.fontSize(7).text(`GRAU DE PARENTESCO`, { align: 'right' });
 
-        doc.moveDown(3); // Espaço extra após a linha
+        doc.moveDown(1); // Espaço extra após a linha
         doc.moveTo(doc.page.margins.left, doc.y)
             .lineTo(doc.page.width - doc.page.margins.right, doc.y)
             .stroke();
-        doc.moveDown(3); // Espaço extra após a linha
+        doc.moveDown(2); // Espaço extra após a linha
       }
       
-      if(indice % 4 === 0) {
+      if(indice % 5 === 0) {
         doc.fontSize(7).text(
           `Página ${currentPage}`,
           { align: 'center', baseline: 'bottom' }
@@ -503,5 +516,15 @@ export default function circuitController
 
   const cpfMask = (cpf: string) => {
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  }
+
+  async function generateQRCode(chaveNfe: any) {
+    try {
+      const qrCodeBuffer = await QRCode.toBuffer(chaveNfe);
+      return qrCodeBuffer;
+    } catch (error) {
+      console.error('Erro ao gerar QR Code:', error);
+      throw error;
+    }
   }
 }

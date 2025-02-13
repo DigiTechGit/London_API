@@ -10,6 +10,7 @@ headers.append("Content-Type", "application/json");
 
 const PDFDocument = require("pdfkit");
 const bwipjs = require("bwip-js");
+const QRCode = require('qrcode')
 
 export default function notaFiscalController(
   fastify: FastifyInstance,
@@ -35,7 +36,6 @@ export default function notaFiscalController(
 			recebedor: true,
 		  },
         });
-		console.log(ctesMotorista);
         let motorista: any = "";
 
         const nFEs = await Promise.all(
@@ -59,6 +59,7 @@ export default function notaFiscalController(
               endereco: cte.recebedor.endereco,
               numero: cte.recebedor.numero,
               cidade: cte.recebedor.cidade,
+              telefone: cte.recebedor.foneContato,
               uf: cte.recebedor.uf,
               ctesPorParada: ctesMotorista.filter(
                 (ctePorParada: any) => ctePorParada.cte === cte.id,
@@ -68,9 +69,15 @@ export default function notaFiscalController(
           }),
         );
 
+        const nFEsOrdenadas = nFEs.sort((a, b) => {
+          if (a[0].cep < b[0].cep) return -1; // `a` vem antes de `b`
+          if (a[0].cep > b[0].cep) return 1;  // `a` vem depois de `b`
+          return 0; // `a` e `b` são iguais
+        });
+
         const res = {
           motorista: motorista,
-          Nfes: nFEs,
+          Nfes: nFEsOrdenadas,
         };
 
         const base64PDF = await generatePDF(res);
@@ -104,15 +111,14 @@ export default function notaFiscalController(
         align: "left",
       })
       .text(` NOME: ${data.motorista.nome}`, {
-        continued: true,
-        align: "left",
+        align: "left"
       });
-    doc.moveDown(2);
-    doc
-      .moveTo(doc.page.margins.left, doc.y)
-      .lineTo(doc.page.width - doc.page.margins.right, doc.y)
-      .stroke();
-    doc.moveDown(2);
+      doc.moveDown(0.5); // Espaço extra após a linha
+      doc
+        .moveTo(doc.page.margins.left, doc.y)
+        .lineTo(doc.page.width - doc.page.margins.right, doc.y)
+        .stroke();
+      doc.moveDown(0.5); // Espaço extra após a linha
     // Loop pelas paradas
     for (let i = 0; i < Nfes.length; i++) {
       const indice = i + 1;
@@ -120,11 +126,11 @@ export default function notaFiscalController(
 
       for (const stop of stops) {
         // Título
-        if (currentPage > 1) doc.moveDown(2);
-
+        // if (currentPage > 1) doc.moveDown(2);
         doc
+        // .moveTo(doc.page.margins.left, doc.y)
           .fontSize(7)
-          .text(`NF: ${stop.nrNfre}`, { continued: true })
+          .text(`NF: ${stop.nrNfre}`, { continued: true, align: "left" })
           .fontSize(7)
           .text(` REMETENTE: ${stop.remetente}`, {
             continued: true,
@@ -140,8 +146,21 @@ export default function notaFiscalController(
         doc.fontSize(7).text(`DESTINATÁRIO: ${stop.destinatario}`);
         doc.moveDown(0.5);
 
+        doc.fontSize(7).text(`TELEFONE: ${stop.telefone}`);
+        doc.moveDown(0.5);
+
         doc.fontSize(7).text(`BAIRRO: ${stop.bairro}`, { align: "left" });
         if (stop.chaveNfe) {
+          const qrCodeBuffer = await generateQRCode(stop.chaveNfe);
+          doc.image(qrCodeBuffer,
+            doc.page.width - doc.page.margins.right - 300,
+            doc.y  - 30, 
+            {
+            fit: [60, 60], // Tamanho do QR Code
+            align: "center",
+            valign: "top",
+          });
+
           const barcodeBuffer = await generateBarcode(stop.chaveNfe);
           doc.image(
             barcodeBuffer,
@@ -164,7 +183,7 @@ export default function notaFiscalController(
         doc.moveDown(0.5);
 
         doc.fontSize(7).text(`ENDEREÇO: ${stop.endereco} ${stop.numero}`);
-        doc.moveDown(1);
+        doc.moveDown(0.5);
 
         // Reduz o tamanho da linha, deixando-a mais curta
         const lineWidth = 100; // Largura da linha menor
@@ -211,15 +230,15 @@ export default function notaFiscalController(
           .stroke();
         doc.fontSize(7).text(`GRAU DE PARENTESCO`, { align: "right" });
 
-        doc.moveDown(3); // Espaço extra após a linha
+        doc.moveDown(1); // Espaço extra após a linha
         doc
           .moveTo(doc.page.margins.left, doc.y)
           .lineTo(doc.page.width - doc.page.margins.right, doc.y)
           .stroke();
-        doc.moveDown(3); // Espaço extra após a linha
+        doc.moveDown(2); // Espaço extra após a linha
       }
 
-      if (indice % 4 === 0) {
+      if (indice % 5 === 0) {
         doc
           .fontSize(7)
           .text(`Página ${currentPage}`, {
@@ -269,4 +288,14 @@ export default function notaFiscalController(
   const cpfMask = (cpf: string) => {
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
   };
+
+  async function generateQRCode(chaveNfe: any) {
+    try {
+      const qrCodeBuffer = await QRCode.toBuffer(chaveNfe);
+      return qrCodeBuffer;
+    } catch (error) {
+      console.error('Erro ao gerar QR Code:', error);
+      throw error;
+    }
+  }
 }
