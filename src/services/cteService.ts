@@ -81,11 +81,11 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     const filteredCTES = await filtroCTEsDuplicadas(ctes);
     const endTimeFiltering = Date.now();
     const durationFiltering = (endTimeFiltering - startTimeFiltering) / 1000;
-    
+
     // Atualizar cache
     cacheCtes.set(UNIDADE, filteredCTES);
     if (cachedCtes.length === 0) return;
-
+    
     // Comparar e processar CTes
     const startTimeProcessing = Date.now();
     const { novos, removidos, modificados } = compararCtes(
@@ -230,6 +230,7 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
               endereco: cte.recebedor.endereco,
               cep: cte.recebedor.cep,
               numero: cte.recebedor.numero,
+              complemento: cte.recebedor.complemento,
             },
           });
         
@@ -246,6 +247,7 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
                 cidade: cte.recebedor.cidade,
                 uf: cte.recebedor.uf,
                 foneContato: cte.recebedor.foneContato,
+                complemento: cte.recebedor.complemento,
               },
             });
           }
@@ -378,7 +380,8 @@ async function adicionarCTEs(ctes: CTES[], UNIDADE: string) {
         recebedor.cep === cte.recebedor.cep.toString() &&
         recebedor.cidade === cte.recebedor.cidade &&
         recebedor.uf === cte.recebedor.uf &&
-        recebedor.foneContato === cte.recebedor.foneContato
+        recebedor.foneContato === cte.recebedor.foneContato &&
+        recebedor.complemento === cte.recebedor.complemento
     );
     
     let recebedorId: number; 
@@ -398,6 +401,7 @@ async function adicionarCTEs(ctes: CTES[], UNIDADE: string) {
           cidade: cte.recebedor.cidade,
           uf: cte.recebedor.uf,
           foneContato: cte.recebedor.foneContato,
+          complemento: cte.recebedor.complemento,
         },
       });
     

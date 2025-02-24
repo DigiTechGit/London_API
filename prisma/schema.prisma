@@ -80,6 +80,7 @@ model Recebedor {
   cidade      String
   uf          String
   foneContato String?
+  complemento String?
   ctes        Ctes[]
 }
 

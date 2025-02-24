@@ -120,7 +120,7 @@ async function AtualizarCtesRecorrente() {
               }
               const data = await response.json();
               if (!data.success || !data.documento.tracking.length) {
-                console.warn(`${cte.id} Nenhum tracking encontrado para NF-e ${nota.chaveNFe}`);
+                // console.warn(`${cte.id} Nenhum tracking encontrado para NF-e ${nota.chaveNFe}`);
                 continue;
               }
               const ultimaOcorrencia = data.documento.tracking[data.documento.tracking.length - 1];
