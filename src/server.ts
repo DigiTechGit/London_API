@@ -16,6 +16,7 @@ import { AtualizarCtesRecorrente } from './services/RelatorioService';
 import RelatorioRoutes from './controllers/RelatorioController';
 import CNPJRoutes from './controllers/CnpjCorreiosController';
 import notaFiscalController from './controllers/notaFiscalController';
+import recebedorRoutes from './controllers/recebedorController';
 
 let jobRunning = false; 
 let jobRelatorioRunning = false; 
@@ -68,6 +69,7 @@ RelatorioRoutes(fastify, prisma)
 RouteRomaneioStockfy(fastify, prisma);
 circuitController(fastify, prisma);
 notaFiscalController(fastify, prisma);
+recebedorRoutes(fastify, prisma);
 
 fastify.get('/', async (request, reply) => {
   reply.send({ status: new Date().toISOString() + ' - Servidor rodando corretamente versão 1.2' });
