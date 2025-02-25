@@ -61,6 +61,7 @@ export default function notaFiscalController(
               cidade: cte.recebedor.cidade,
               telefone: cte.recebedor.foneContato,
               uf: cte.recebedor.uf,
+              complemento: cte.recebedor.complemento,
               ctesPorParada: ctesMotorista.filter(
                 (ctePorParada: any) => ctePorParada.cte === cte.id,
               ),
@@ -138,16 +139,16 @@ export default function notaFiscalController(
           })
           .fontSize(7)
           .text(` PREVISÃO ENTREGA: ${stop.prevEntrega}`, { align: "right" });
-        doc.moveDown(0.5);
+        doc.moveDown(0.2);
         doc
           .fontSize(7)
           .text(`QTD VOLUMES: ${stop.qtdeVolumes}`, { align: "left" });
 
         doc.fontSize(7).text(`DESTINATÁRIO: ${stop.destinatario}`);
-        doc.moveDown(0.5);
+        doc.moveDown(0.2);
 
         doc.fontSize(7).text(`TELEFONE: ${stop.telefone}`);
-        doc.moveDown(0.5);
+        doc.moveDown(0.2);
 
         doc.fontSize(7).text(`BAIRRO: ${stop.bairro}`, { align: "left" });
         if (stop.chaveNfe) {
@@ -164,25 +165,28 @@ export default function notaFiscalController(
           const barcodeBuffer = await generateBarcode(stop.chaveNfe);
           doc.image(
             barcodeBuffer,
-            doc.page.width - doc.page.margins.right - 200,
+            doc.page.width - doc.page.margins.right - 170,
             doc.y - 20,
             {
-              fit: [200, 80], // Novo tamanho do código de barras
+              fit: [170, 60], // Novo tamanho do código de barras
               align: "right", // Mantém à direita
               valign: "top", // Alinha no topo
             },
           );
         }
-        doc.moveDown(0.5);
+        doc.moveDown(0.2);
 
         doc
           .fontSize(7)
           .text(`CEP: ${stop.cep}`, { continued: true, align: "left" })
           .fontSize(7)
           .text(` ${stop.cidade} / ${stop.uf}`);
-        doc.moveDown(0.5);
+        doc.moveDown(0.2);
 
         doc.fontSize(7).text(`ENDEREÇO: ${stop.endereco} ${stop.numero}`);
+        doc.moveDown(0.2);
+
+        doc.fontSize(7).text(`COMPL.: ${stop.complemento || ""}`);
         doc.moveDown(0.5);
 
         // Reduz o tamanho da linha, deixando-a mais curta
