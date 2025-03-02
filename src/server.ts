@@ -17,6 +17,7 @@ import RelatorioRoutes from './controllers/RelatorioController';
 import CNPJRoutes from './controllers/CnpjCorreiosController';
 import notaFiscalController from './controllers/notaFiscalController';
 import recebedorRoutes from './controllers/recebedorController';
+import whatsappRoutes from './controllers/whatsappController';
 
 let jobRunning = false; 
 let jobRelatorioRunning = false; 
@@ -32,22 +33,6 @@ const fastify = Fastify({
   //},
 });
 const prisma = new PrismaClient();
-
-// fastify.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
-
-//   // Ignorar a rota de login
-//   if (request.url.includes('/User') || request.url === '/') {
-//     return;
-//   }
-
-//   const token = request.headers['authorization'];
-
-//   if (!token) {
-//     reply.code(401).send({ error: 'Token invalid' });
-//     return;
-//   }
-// });
-
 
 fastify.addHook('onRequest', (request, reply, done) => {
   reply.header('Access-Control-Allow-Origin', '*'); 
@@ -70,97 +55,98 @@ RouteRomaneioStockfy(fastify, prisma);
 circuitController(fastify, prisma);
 notaFiscalController(fastify, prisma);
 recebedorRoutes(fastify, prisma);
+whatsappRoutes(fastify);
 
 fastify.get('/', async (request, reply) => {
   reply.send({ status: new Date().toISOString() + ' - Servidor rodando corretamente versão 1.2' });
 });
 
-cron.schedule('0 4 * * *', async () => {
-  if (jobRunning) {
-    // console.log(new Date().toISOString() + ' - O job já está em execução. Ignorando nova execução.');
-    return;
-  }
+// cron.schedule('0 4 * * *', async () => {
+//   if (jobRunning) {
+//     // console.log(new Date().toISOString() + ' - O job já está em execução. Ignorando nova execução.');
+//     return;
+//   }
 
-  try {
-    const unidades = await prisma.unidade.findMany({
-      where: {
-        idAtivo: true, // Somente as unidades ativas
-      },
-    });
-    jobRunning = true; 
-    console.log('Iniciando job de busca de CTe...');
+//   try {
+//     const unidades = await prisma.unidade.findMany({
+//       where: {
+//         idAtivo: true, // Somente as unidades ativas
+//       },
+//     });
+//     jobRunning = true; 
+//     console.log('Iniciando job de busca de CTe...');
 
-    const promessas = unidades.map(unidade => {
-      console.log(`Iniciando processamento da unidade: ${unidade.Unidade}`);
-      return buscarEInserirCtesRecorrenteStatusId(unidade.Unidade);
-    });
+//     const promessas = unidades.map(unidade => {
+//       console.log(`Iniciando processamento da unidade: ${unidade.Unidade}`);
+//       return buscarEInserirCtesRecorrenteStatusId(unidade.Unidade);
+//     });
 
-    // Executar todas as promessas em paralelo
-    await Promise.all(promessas);
-    console.log('Job de busca de CTe concluído.');
+//     // Executar todas as promessas em paralelo
+//     await Promise.all(promessas);
+//     console.log('Job de busca de CTe concluído.');
 
-  } catch (error) {
-    console.error('Erro ao executar o job:', error);
-  } finally {
-    jobRunning = false; 
-    console.log('Job finalizado.');
-  }
-});
+//   } catch (error) {
+//     console.error('Erro ao executar o job:', error);
+//   } finally {
+//     jobRunning = false; 
+//     console.log('Job finalizado.');
+//   }
+// });
 
 
-cron.schedule('* * 5-23 * * *', async () => {
-  if (jobRunning) {
-    // console.log(new Date().toISOString() + ' - O job já está em execução. Ignorando nova execução.');
-    return;
-  }
+// cron.schedule('* * 5-23 * * *', async () => {
+//   if (jobRunning) {
+//     // console.log(new Date().toISOString() + ' - O job já está em execução. Ignorando nova execução.');
+//     return;
+//   }
 
-  try {
-    const unidades = await prisma.unidade.findMany({
-      where: {
-        idAtivo: true, // Somente as unidades ativas
-      },
-    });
-    jobRunning = true; 
-    // console.log('Iniciando job de busca de CTe...');
+//   try {
+//     const unidades = await prisma.unidade.findMany({
+//       where: {
+//         idAtivo: true, // Somente as unidades ativas
+//       },
+//     });
+//     jobRunning = true; 
+//     // console.log('Iniciando job de busca de CTe...');
 
-  const promessas = unidades.map(unidade => {
-    // console.log(`Iniciando processamento da unidade: ${unidade.Unidade}`);
-    return buscarEInserirCtesRecorrente(unidade.Unidade);
-  });
+//   const promessas = unidades.map(unidade => {
+//     // console.log(`Iniciando processamento da unidade: ${unidade.Unidade}`);
+//     return buscarEInserirCtesRecorrente(unidade.Unidade);
+//   });
 
-  // Executar todas as promessas em paralelo
-  await Promise.all(promessas);
-  // console.log('Job de busca de CTe concluído.');
+//   // Executar todas as promessas em paralelo
+//   await Promise.all(promessas);
+//   // console.log('Job de busca de CTe concluído.');
 
-  } catch (error) {
-    console.error('Erro ao executar o job:', error);
-  } finally {
-    jobRunning = false; 
-    console.log('Job finalizado.');
-  }
-});
+//   } catch (error) {
+//     console.error('Erro ao executar o job:', error);
+//   } finally {
+//     jobRunning = false; 
+//     console.log('Job finalizado.');
+//   }
+// });
 
-cron.schedule('* * * * * *', async () => {
-  if (jobRelatorioRunning) {
-    // console.log(new Date().toISOString() + ' - O job Atualizar já está em execução. Ignorando nova execução.');
-    return;
-  }
-  try {
-    jobRelatorioRunning = true; 
-    console.log('Iniciando job de busca de CTe...');
+// cron.schedule('* * * * * *', async () => {
+//   if (jobRelatorioRunning) {
+//     // console.log(new Date().toISOString() + ' - O job Atualizar já está em execução. Ignorando nova execução.');
+//     return;
+//   }
+//   try {
+//     jobRelatorioRunning = true; 
+//     console.log('Iniciando job de busca de CTe...');
 
  
-  // Executar todas as promessas em paralelo
-  await   AtualizarCtesRecorrente();
-  console.log('Job de busca de CTe concluído.');
+//   // Executar todas as promessas em paralelo
+//   await   AtualizarCtesRecorrente();
+//   console.log('Job de busca de CTe concluído.');
 
-  } catch (error) {
-    console.error('Erro ao executar o job:', error);
-  } finally {
-    jobRelatorioRunning = false; 
-    console.log('Job finalizado.');
-  }
-});
+//   } catch (error) {
+//     console.error('Erro ao executar o job:', error);
+//   } finally {
+//     jobRelatorioRunning = false; 
+//     console.log('Job finalizado.');
+//   }
+// });
 
 
 const start = async () => {
