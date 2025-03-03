@@ -46,10 +46,11 @@ model Ctes {
 }
 
 model Motorista_ssw {
-  id   Int    @id @default(autoincrement())
-  nome String
-  cpf  String @unique
-  ctes Ctes[]
+  id       Int     @id @default(autoincrement())
+  nome     String
+  telefone String?
+  cpf      String  @unique
+  ctes     Ctes[]
 }
 
 model Remetente {
