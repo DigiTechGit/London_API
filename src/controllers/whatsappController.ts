@@ -108,13 +108,33 @@ export default function whatsappRoutes(fastify: FastifyInstance, prisma: PrismaC
 
     const base64 = await convertToXlsxReturnBase64(enderecos);
 
-    io.emit("sendFile", { 
-        phone: '41997601739', 
-        nome: 'cesar', 
-        base64File: base64, 
-        fileName: 'fileName', 
-        caption: 'caption'
+    const motorista = await prisma.motorista_ssw.findFirst({
+      where: {
+        id: Number(id),
+      },
     });
+    
+    if (!motorista) {
+      return reply.status(404).send({ error: "Motorista não encontrado" });
+    }
+
+    if(!motorista.telefone) {
+      return reply.status(400).send({ error: "Telefone do motorista não cadastrado" });
+    }
+
+    if(!isConnected) {
+      return reply.status(400).send({ error: "Bot não conectado" });
+    }
+    
+    const nmArquivo = `enderecos_${motorista.nome}.xlsx`;
+    
+    io.emit("sendFile", { 
+      phone: motorista.telefone, 
+      nome: motorista.nome, 
+      base64File: base64, 
+      fileName: nmArquivo, 
+      caption: "Segue em anexo a planilha com os endereços dos destinatários."
+    });    
 
     return { connected: isConnected, receivedId: id };
   });
@@ -122,6 +142,4 @@ export default function whatsappRoutes(fastify: FastifyInstance, prisma: PrismaC
   fastify.get("/whatsapp/status", async (request, reply) => {
     return { connected: isConnected };
   });
-
- 
 }
