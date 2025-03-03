@@ -1,6 +1,5 @@
-import { FastifyInstance } from "fastify";
 import { PrismaClient } from "@prisma/client";
-import { CTeRequestBody } from "../interfaces/CTeRequestBody";
+import { FastifyInstance } from "fastify";
 
 export default function cteRoutes(
   fastify: FastifyInstance,
@@ -358,26 +357,36 @@ export default function cteRoutes(
         },
       });
   
-      // Criar um mapa para armazenar as placas únicas e os nomes dos motoristas
-      const placasMotoristasMap = new Map();
+      // Criar um mapa para contar as ocorrências de cada combinação de placa e motorista
+      const placasMotoristasMap = new Map<
+        string,
+        { placaVeiculo: string; nomeMotorista: string; cteContador: number }
+      >();
   
       ctes.forEach(cte => {
         if (cte.placaVeiculo && cte.motorista?.nome) {
-          placasMotoristasMap.set(cte.placaVeiculo, cte.motorista.nome);
+          // Cria uma chave composta usando a placa e o nome do motorista
+          const key = `${cte.placaVeiculo}_${cte.motorista.nome}`;
+          if (placasMotoristasMap.has(key)) {
+            placasMotoristasMap.get(key)!.cteContador++;
+          } else {
+            placasMotoristasMap.set(key, {
+              placaVeiculo: cte.placaVeiculo,
+              nomeMotorista: cte.motorista.nome,
+              cteContador: 1,
+            });
+          }
         }
       });
   
       // Converter o mapa para um array de objetos
-      const placasMotoristas = Array.from(placasMotoristasMap).map(([placa, nome]) => ({
-        placaVeiculo: placa,
-        nomeMotorista: nome,
-      }));
+      const placasMotoristas = Array.from(placasMotoristasMap.values());
   
       reply.status(200).send(placasMotoristas);
     } catch (error) {
       console.error(error);
       reply.status(500).send({ error: "Failed to list CTe" });
     }
-  }
+  }  
 );  
 }
