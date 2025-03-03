@@ -9,7 +9,7 @@ headers.append('Authorization', `Basic ${btoa(`${apiKey}:`)}`);
 
 export default function motoristaSSWRoutes(fastify: FastifyInstance, prisma: PrismaClient) {
   // Listar todos os motoristaSSWs
-  fastify.get('/MotoristaSSWs', async (request, reply) => {
+  fastify.get('/MotoristasSSW', async (request, reply) => {
     try {
       const MotoristaSSW = await prisma.motorista_ssw.findMany();
 
@@ -24,7 +24,7 @@ export default function motoristaSSWRoutes(fastify: FastifyInstance, prisma: Pri
   });
 
   // Obter um único motoristaSSW
-  fastify.get('/MotoristaSSW/:id', async (request, reply) => {
+  fastify.get('/MotoristasSSW/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
       const MotoristaSSW = await prisma.motorista_ssw.findUnique({ where: { id: Number(id) } });
@@ -43,7 +43,7 @@ export default function motoristaSSWRoutes(fastify: FastifyInstance, prisma: Pri
   });
 
   // Atualizar um motoristaSSW
-  fastify.put('/MotoristaSSW/:id', async (request, reply) => {
+  fastify.put('/MotoristasSSW/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
       const { telefone } = request.body as { telefone: string };
