@@ -18,6 +18,7 @@ import CNPJRoutes from './controllers/CnpjCorreiosController';
 import notaFiscalController from './controllers/notaFiscalController';
 import recebedorRoutes from './controllers/recebedorController';
 import whatsappRoutes from './controllers/whatsappController';
+import ReportRouter from './controllers/ReportController';
 
 let jobRunning = false; 
 let jobRelatorioRunning = false; 
@@ -55,7 +56,8 @@ RouteRomaneioStockfy(fastify, prisma);
 circuitController(fastify, prisma);
 notaFiscalController(fastify, prisma);
 recebedorRoutes(fastify, prisma);
-whatsappRoutes(fastify);
+whatsappRoutes(fastify, prisma);
+ReportRouter(fastify, prisma);
 
 fastify.get('/', async (request, reply) => {
   reply.send({ status: new Date().toISOString() + ' - Servidor rodando corretamente versão 1.2' });

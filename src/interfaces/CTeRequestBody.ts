@@ -21,6 +21,7 @@ interface Recebedor {
   cidade: string;
   uf: string;
   foneContato?: string;
+  celularContato?: string;
 }
 
 export interface CTeRequestBody {
@@ -34,4 +35,12 @@ export interface CTeRequestBody {
   remetente: Remetente;
   destinatario: Destinatario;
   recebedor: Recebedor;
+}
+
+export interface Historico {
+  id: number;
+  data: Date;
+  descricao: string;
+  entidade: string;
+  codigoEntidade: number;
 }

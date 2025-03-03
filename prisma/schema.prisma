@@ -81,6 +81,7 @@ model Recebedor {
   uf          String
   foneContato String?
   complemento String?
+  celularContato String?
   ctes        Ctes[]
 }
 
@@ -148,4 +149,12 @@ model RelatorioPerformance {
   totalNaoEntregue String
   nomeMotorista    String
   placaMotorista   String
+}
+
+model Historico {
+  id               Int      @id @default(autoincrement())
+  data             DateTime
+  descricao        String
+  entidade         String
+  codigoEntidade   Int
 }
