@@ -2,15 +2,11 @@ import { FastifyInstance } from "fastify";
 import { PrismaClient, Recebedor } from "@prisma/client";
 import ExcelJS from "exceljs";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { Socket } from "socket.io";
-
-const socketIo = require("socket.io");
 
 export default function EnderecoReportRouter(
   fastify: FastifyInstance,
   prisma: PrismaClient,
 ) {
-  const io = socketIo(fastify.server, { cors: { origin: "*" } });
 
   fastify.post(
     "/report/exportar-enderecos",
