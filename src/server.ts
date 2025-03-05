@@ -1,21 +1,25 @@
-import { PrismaClient } from '@prisma/client';
-import dotenv from 'dotenv';
 import Fastify from 'fastify';
-import circuitController from './controllers/circuitController';
-import CNPJRoutes from './controllers/CnpjCorreiosController';
-import cteRoutes from './controllers/cteController';
-import dadosUsuariosRoutes from './controllers/DadosUsuarioController';
-import userRoutes from './controllers/LoginController';
+import { PrismaClient } from '@prisma/client';
 import motoristaRoutes from './controllers/motoristaController';
+import cteRoutes from './controllers/cteController';
+import userRoutes from './controllers/LoginController';
+import RouteRomaneioStockfy from './controllers/sswController';
+import statusRoutes from './controllers/statusController';
+import circuitController from './controllers/circuitController';
+import dotenv from 'dotenv';
+import cron from 'node-cron';
+import { buscarEInserirCtesRecorrente, buscarEInserirCtesRecorrenteStatusId } from './services/cteService';
+import unidadeRoutes from './controllers/UnidadeController';
+import dadosUsuariosRoutes from './controllers/DadosUsuarioController';
+import fs from 'fs';
+import { AtualizarCtesRecorrente } from './services/RelatorioService';
+import RelatorioRoutes from './controllers/RelatorioController';
+import CNPJRoutes from './controllers/CnpjCorreiosController';
 import motoristaSSWRoutes from './controllers/motoristaSSWController';
 import notaFiscalController from './controllers/notaFiscalController';
 import recebedorRoutes from './controllers/recebedorController';
-import RelatorioRoutes from './controllers/RelatorioController';
-import RouteRomaneioStockfy from './controllers/sswController';
-import statusRoutes from './controllers/statusController';
-import unidadeRoutes from './controllers/UnidadeController';
 import whatsappRoutes from './controllers/whatsappController';
-import ReportRouter from './controllers/ReportController';
+import reportRouter from './controllers/ReportController';
 
 let jobRunning = false; 
 let jobRelatorioRunning = false; 
@@ -55,7 +59,7 @@ circuitController(fastify, prisma);
 notaFiscalController(fastify, prisma);
 recebedorRoutes(fastify, prisma);
 whatsappRoutes(fastify, prisma);
-ReportRouter(fastify, prisma);
+reportRouter(fastify, prisma);
 
 fastify.get('/', async (request, reply) => {
   reply.send({ status: new Date().toISOString() + ' - Servidor rodando corretamente versão 1.2' });

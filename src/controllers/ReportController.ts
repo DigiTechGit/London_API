@@ -3,7 +3,7 @@ import { PrismaClient, Recebedor } from "@prisma/client";
 import ExcelJS from "exceljs";
 import { FastifyReply, FastifyRequest } from "fastify";
 
-export default function EnderecoReportRouter(
+export default function reportRouter(
   fastify: FastifyInstance,
   prisma: PrismaClient,
 ) {
