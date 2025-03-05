@@ -48,6 +48,7 @@ export default function notaFiscalController(
             }
 
             const objNFe = cte.NotaFiscal.map((nfe: any) => ({
+              chaveCte: cte.chaveCTe,
               chaveNfe: nfe.chaveNFe,
               nrNfre: nfe.nroNF,
               qtdeVolumes: nfe.qtdeVolumes,
@@ -60,6 +61,7 @@ export default function notaFiscalController(
               numero: cte.recebedor.numero,
               cidade: cte.recebedor.cidade,
               telefone: cte.recebedor.foneContato,
+              celular: cte.recebedor.celularContato,
               uf: cte.recebedor.uf,
               complemento: cte.recebedor.complemento,
               ctesPorParada: ctesMotorista.filter(
@@ -147,12 +149,13 @@ export default function notaFiscalController(
         doc.fontSize(7).text(`DESTINATÁRIO: ${stop.destinatario}`);
         doc.moveDown(0.2);
 
-        doc.fontSize(7).text(`TELEFONE: ${stop.telefone}`);
+        doc.fontSize(7).text(`TELEFONE: ${stop.telefone || stop.celular}`);
         doc.moveDown(0.2);
 
         doc.fontSize(7).text(`BAIRRO: ${stop.bairro}`, { align: "left" });
-        if (stop.chaveNfe) {
-          const qrCodeBuffer = await generateQRCode(stop.chaveNfe);
+        if (stop.chaveNfe || stop.chaveCTe) {
+          const chave = stop.chaveNfe || stop.chaveCTe;
+          const qrCodeBuffer = await generateQRCode(chave);
           doc.image(qrCodeBuffer,
             doc.page.width - doc.page.margins.right - 300,
             doc.y  - 30, 
@@ -162,7 +165,7 @@ export default function notaFiscalController(
             valign: "top",
           });
 
-          const barcodeBuffer = await generateBarcode(stop.chaveNfe);
+          const barcodeBuffer = await generateBarcode(chave);
           doc.image(
             barcodeBuffer,
             doc.page.width - doc.page.margins.right - 170,

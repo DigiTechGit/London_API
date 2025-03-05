@@ -264,6 +264,7 @@ export default function circuitController
           }
 
           const objNFe = cte.NotaFiscal.map((nfe: any) => ({
+            chaveCte: cte.chaveCTe,
             chaveNfe: nfe.chaveNFe,
             nrNfre: nfe.nroNF,
             qtdeVolumes: nfe.qtdeVolumes,
@@ -275,6 +276,8 @@ export default function circuitController
             endereco: cte.recebedor.endereco,
             numero: cte.recebedor.numero,
             cidade: cte.recebedor.cidade,
+            telefone: cte.recebedor.foneContato,
+            celular: cte.recebedor.celularContato,
             uf: cte.recebedor.uf,
             ctesPorParada: ctesPorParada.filter((ctePorParada: any) => ctePorParada.cte === cte.id)
           }));
@@ -399,12 +402,13 @@ export default function circuitController
         doc.fontSize(7).text(`DESTINATÁRIO: ${stop.destinatario}`);
         doc.moveDown(0.5);
 
-        doc.fontSize(7).text(`TELEFONE: ${stop.telefone}`);
+        doc.fontSize(7).text(`TELEFONE: ${stop.telefone || stop.celular}`);
         doc.moveDown(0.5);
 
         doc.fontSize(7).text(`BAIRRO: ${stop.bairro}`, { align: 'left' });
-        if (stop.chaveNfe) {
-          const qrCodeBuffer = await generateQRCode(stop.chaveNfe);
+        if (stop.chaveNfe || stop.chaveCte) {
+          const chave = stop.chaveNfe || stop.chaveCte;
+          const qrCodeBuffer = await generateQRCode(chave);
           doc.image(qrCodeBuffer,
             doc.page.width - doc.page.margins.right - 300,
             doc.y  - 30, 
@@ -414,7 +418,7 @@ export default function circuitController
             valign: "top",
           });
 
-          const barcodeBuffer = await generateBarcode(stop.chaveNfe);
+          const barcodeBuffer = await generateBarcode(chave);
           doc.image(barcodeBuffer, doc.page.width - doc.page.margins.right - 200, doc.y - 20, {
               fit: [200, 80], // Novo tamanho do código de barras
               align: 'right', // Mantém à direita

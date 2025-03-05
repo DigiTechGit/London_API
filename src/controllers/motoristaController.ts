@@ -1,9 +1,8 @@
-import { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
+import { FastifyInstance } from 'fastify';
+import { MotoristaService } from '../services/motoristaService';
 
 const apiKey = process.env.API_KEY;
-import { endpoints } from "../utils/API";
-import { MotoristaService } from '../services/motoristaService';
 
 const headers = new Headers();
 headers.append('Content-Type', 'application/json');
@@ -44,6 +43,8 @@ export default function motoristaRoutes(fastify: FastifyInstance, prisma: Prisma
       }
     }
   });
+
+
 
   // Obter um único motorista
   fastify.get('/Motorista/:id', async (request, reply) => {

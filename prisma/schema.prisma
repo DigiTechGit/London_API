@@ -46,10 +46,11 @@ model Ctes {
 }
 
 model Motorista_ssw {
-  id   Int    @id @default(autoincrement())
-  nome String
-  cpf  String @unique
-  ctes Ctes[]
+  id       Int     @id @default(autoincrement())
+  nome     String
+  telefone String?
+  cpf      String  @unique
+  ctes     Ctes[]
 }
 
 model Remetente {
@@ -81,6 +82,7 @@ model Recebedor {
   uf          String
   foneContato String?
   complemento String?
+  celularContato String?
   ctes        Ctes[]
 }
 
@@ -148,4 +150,12 @@ model RelatorioPerformance {
   totalNaoEntregue String
   nomeMotorista    String
   placaMotorista   String
+}
+
+model Historico {
+  id               Int      @id @default(autoincrement())
+  data             DateTime
+  descricao        String
+  entidade         String
+  codigoEntidade   Int
 }

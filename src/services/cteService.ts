@@ -231,6 +231,8 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
               cep: cte.recebedor.cep,
               numero: cte.recebedor.numero,
               complemento: cte.recebedor.complemento,
+              foneContato: cte.recebedor.foneContato,
+              celularContato: cte.recebedor.celularContato,
             },
           });
         
@@ -247,6 +249,7 @@ export async function buscarEInserirCtesRecorrenteStatusId(UNIDADE: string) {
                 cidade: cte.recebedor.cidade,
                 uf: cte.recebedor.uf,
                 foneContato: cte.recebedor.foneContato,
+                celularContato: cte.recebedor.celularContato,
                 complemento: cte.recebedor.complemento,
               },
             });
@@ -381,6 +384,7 @@ async function adicionarCTEs(ctes: CTES[], UNIDADE: string) {
         recebedor.cidade === cte.recebedor.cidade &&
         recebedor.uf === cte.recebedor.uf &&
         recebedor.foneContato === cte.recebedor.foneContato &&
+        recebedor.celularContato === cte.recebedor.celularContato &&
         recebedor.complemento === cte.recebedor.complemento
     );
     
@@ -401,6 +405,7 @@ async function adicionarCTEs(ctes: CTES[], UNIDADE: string) {
           cidade: cte.recebedor.cidade,
           uf: cte.recebedor.uf,
           foneContato: cte.recebedor.foneContato,
+          celularContato: cte.recebedor.celularContato,
           complemento: cte.recebedor.complemento,
         },
       });

@@ -50,5 +50,6 @@ export interface Recebedor {
   cidade:      string;
   uf:          string;
   foneContato: string;
+  celularContato: string;
   complemento: string;
 }
