@@ -7,7 +7,9 @@ const socketIo = require("socket.io");
 let latestQrCode: string | null = null; // Armazena o QR Code mais recente
 
 export default function whatsappRoutes(fastify: FastifyInstance, prisma: PrismaClient) {
-  const io = socketIo(fastify.server, { cors: { origin: "*" } });
+  const io = socketIo(fastify.server, { cors: {
+    origin: "https://envioprime.com.br"
+  } });
   let isConnected = false;
 
   io.on("connection", (socket: Socket) => {
