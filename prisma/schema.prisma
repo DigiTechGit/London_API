@@ -49,6 +49,7 @@ model Motorista_ssw {
   id       Int     @id @default(autoincrement())
   nome     String
   telefone String?
+  whatsApp Boolean @default(false)
   cpf      String  @unique
   ctes     Ctes[]
 }
@@ -70,20 +71,20 @@ model Destinatario {
 }
 
 model Recebedor {
-  id          Int     @id @default(autoincrement())
-  cnpjCPF     String
-  tipo        String?
-  nome        String
-  endereco    String
-  numero      String
-  bairro      String
-  cep         String
-  cidade      String
-  uf          String
-  foneContato String?
-  complemento String?
+  id             Int     @id @default(autoincrement())
+  cnpjCPF        String
+  tipo           String?
+  nome           String
+  endereco       String
+  numero         String
+  bairro         String
+  cep            String
+  cidade         String
+  uf             String
+  foneContato    String?
+  complemento    String?
   celularContato String?
-  ctes        Ctes[]
+  ctes           Ctes[]
 }
 
 model StatusEnvio {
@@ -153,9 +154,9 @@ model RelatorioPerformance {
 }
 
 model Historico {
-  id               Int      @id @default(autoincrement())
-  data             DateTime
-  descricao        String
-  entidade         String
-  codigoEntidade   Int
+  id             Int      @id @default(autoincrement())
+  data           DateTime
+  descricao      String
+  entidade       String
+  codigoEntidade Int
 }
