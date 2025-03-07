@@ -1,6 +1,5 @@
-import { FastifyInstance } from "fastify";
 import { PrismaClient } from "@prisma/client";
-import { CTeRequestBody } from "../interfaces/CTeRequestBody";
+import { FastifyInstance } from "fastify";
 
 export default function cteRoutes(
   fastify: FastifyInstance,
@@ -86,7 +85,10 @@ export default function cteRoutes(
 
   fastify.get("/quantidadeCtesTotalPorStatus", async (request, reply) => {
     try {
-      const { unidade, status } = request.query as { unidade: string, status: string };
+      const { unidade, status } = request.query as {
+        unidade: string;
+        status: string;
+      };
 
       const ultimoLog = await prisma.log.findFirst({
         where: {
@@ -101,16 +103,16 @@ export default function cteRoutes(
         select: {
           idCircuit: true,
           placa: true,
-        }
+        },
       });
       const statusFormatado = status ? parseInt(status) : 1;
       const placasSalvas = motoristasSalvos.map((motorista) => motorista.placa);
-      
+
       if (ultimoLog && ultimoLog.createdAt) {
         const dtAlteracaoComMinutos = new Date(ultimoLog.createdAt);
         dtAlteracaoComMinutos.setMinutes(dtAlteracaoComMinutos.getMinutes());
       }
-      
+
       // Buscar os CTe's com base nos filtros
       const ctes = await prisma.ctes.findMany({
         where: {
@@ -131,7 +133,7 @@ export default function cteRoutes(
           NotaFiscal: true,
         },
       });
-      
+
       // Enriquecer os CTe's com informação de cnpjCorreios
       const ctesEnriched = await Promise.all(
         ctes.map(async (cte) => {
@@ -141,7 +143,7 @@ export default function cteRoutes(
               CNPJ: remetenteCNPJ,
             },
           });
-      
+
           return {
             ...cte,
             cnpjCorreios: !!cnpjExists,
@@ -150,27 +152,35 @@ export default function cteRoutes(
       );
 
       const motoristasComCtes = motoristasSalvos
-      .map((motorista) => {
-        const ctesDoMotorista = ctesEnriched.filter(
-          (cte) => cte.placaVeiculo === motorista.placa 
-        );
+        .map((motorista) => {
+          const ctesDoMotorista = ctesEnriched.filter(
+            (cte) => cte.placaVeiculo === motorista.placa
+          );
 
-        const motoristaComNome = {
-          ...motorista,
-          nome: ctesDoMotorista[0]?.motorista?.nome || null, 
-        };
-        const ctesEnviados = ctesDoMotorista.filter((cte) => cte.statusId === 2);
-        const ctesNaoEnviados = ctesDoMotorista.filter((cte) => cte.statusId === 1);
-        return ctesDoMotorista.length > 0
-          ? {
-              ...motoristaComNome,
-              ctes: statusFormatado ? ctesDoMotorista.filter((cte) => cte.statusId === statusFormatado) : ctesDoMotorista,
-              ctesEnviados: ctesEnviados.length,
-              ctesNaoEnviados: ctesNaoEnviados.length,
-            } : null;
-      })
-      .filter(Boolean); // Remove itens nulos
-        
+          const motoristaComNome = {
+            ...motorista,
+            nome: ctesDoMotorista[0]?.motorista?.nome || null,
+          };
+          const ctesEnviados = ctesDoMotorista.filter(
+            (cte) => cte.statusId === 2
+          );
+          const ctesNaoEnviados = ctesDoMotorista.filter(
+            (cte) => cte.statusId === 1
+          );
+          return ctesDoMotorista.length > 0
+            ? {
+                ...motoristaComNome,
+                ctes: statusFormatado
+                  ? ctesDoMotorista.filter(
+                      (cte) => cte.statusId === statusFormatado
+                    )
+                  : ctesDoMotorista,
+                ctesEnviados: ctesEnviados.length,
+                ctesNaoEnviados: ctesNaoEnviados.length,
+              }
+            : null;
+        })
+        .filter(Boolean); // Remove itens nulos
 
       reply.status(200).send(motoristasComCtes);
     } catch (error) {
@@ -181,8 +191,11 @@ export default function cteRoutes(
 
   fastify.get("/ctesPorPlaca", async (request, reply) => {
     try {
-      const { unidade, placa, statusId } = request.query as { unidade: string, placa: string, statusId: string };
-
+      const { unidade, placa, statusId } = request.query as {
+        unidade: string;
+        placa: string;
+        statusId: string;
+      };
 
       const motoristasSalvos = await prisma.motorista.findMany({
         where: {
@@ -191,12 +204,12 @@ export default function cteRoutes(
         select: {
           idCircuit: true,
           placa: true,
-        }
+        },
       });
 
       const statusFormatado = statusId ? parseInt(statusId) : 1;
       const placasSalvas = motoristasSalvos.map((motorista) => motorista.placa);
-      
+
       // Buscar os CTe's com base nos filtros
       const ctes = await prisma.ctes.findMany({
         where: {
@@ -225,7 +238,7 @@ export default function cteRoutes(
               CNPJ: remetenteCNPJ,
             },
           });
-      
+
           return {
             ...cte,
             cnpjCorreios: !!cnpjExists,
@@ -234,27 +247,35 @@ export default function cteRoutes(
       );
 
       const motoristasComCtes = motoristasSalvos
-      .map((motorista) => {
-        const ctesDoMotorista = ctesEnriched.filter(
-          (cte) => cte.placaVeiculo === motorista.placa
-        );
+        .map((motorista) => {
+          const ctesDoMotorista = ctesEnriched.filter(
+            (cte) => cte.placaVeiculo === motorista.placa
+          );
 
-        const motoristaComNome = {
-          ...motorista,
-          nome: ctesDoMotorista[0]?.motorista?.nome || null, 
-        };
-        const ctesEnviados = ctesDoMotorista.filter((cte) => cte.statusId === 2);
-        const ctesNaoEnviados = ctesDoMotorista.filter((cte) => cte.statusId === 1);
-        return ctesDoMotorista.length > 0
-          ? {
-              ...motoristaComNome,
-              ctes: statusFormatado ? ctesDoMotorista.filter((cte) => cte.statusId === statusFormatado) : ctesDoMotorista,
-              ctesEnviados: ctesEnviados.length,
-              ctesNaoEnviados: ctesNaoEnviados.length,
-            }
-          : null;
-      })
-      .filter(Boolean); // Remove itens nulos
+          const motoristaComNome = {
+            ...motorista,
+            nome: ctesDoMotorista[0]?.motorista?.nome || null,
+          };
+          const ctesEnviados = ctesDoMotorista.filter(
+            (cte) => cte.statusId === 2
+          );
+          const ctesNaoEnviados = ctesDoMotorista.filter(
+            (cte) => cte.statusId === 1
+          );
+          return ctesDoMotorista.length > 0
+            ? {
+                ...motoristaComNome,
+                ctes: statusFormatado
+                  ? ctesDoMotorista.filter(
+                      (cte) => cte.statusId === statusFormatado
+                    )
+                  : ctesDoMotorista,
+                ctesEnviados: ctesEnviados.length,
+                ctesNaoEnviados: ctesNaoEnviados.length,
+              }
+            : null;
+        })
+        .filter(Boolean); // Remove itens nulos
 
       reply.status(200).send(motoristasComCtes);
     } catch (error) {
@@ -266,22 +287,23 @@ export default function cteRoutes(
     try {
       const { unidade } = request.query as { unidade: string };
 
-      const motoristasSalvos = await prisma.motorista.findMany({
+      // Buscar os motoristas que possuem whatsApp true na tabela Motorista_ssw
+      const motoristasSalvos = await prisma.motorista_ssw.findMany({
+        where: { whatsApp: true },
         select: {
-          idCircuit: true,
-          placa: true,
-        }
+          id: true,
+          nome: true,
+        },
       });
 
-      const placasSalvas = motoristasSalvos.map((motorista) => motorista.placa);
-      
-      // Buscar os CTe's com base nos filtros
+      // Obter os IDs dos motoristas para filtrar os CTe's
+      const motoristaIds = motoristasSalvos.map((motorista) => motorista.id);
+
+      // Buscar os CTe's com base nos filtros e filtrando pelo motoristaId
       const ctes = await prisma.ctes.findMany({
         where: {
           codUltOco: 85,
-          placaVeiculo: {
-            in: placasSalvas,
-          },
+          motoristaId: { in: motoristaIds },
           Unidade: unidade.toUpperCase(),
           listarCTE: true,
         },
@@ -294,7 +316,7 @@ export default function cteRoutes(
           NotaFiscal: true,
         },
       });
-      
+
       // Enriquecer os CTe's com informação de cnpjCorreios
       const ctesEnriched = await Promise.all(
         ctes.map(async (cte) => {
@@ -304,7 +326,7 @@ export default function cteRoutes(
               CNPJ: remetenteCNPJ,
             },
           });
-      
+
           return {
             ...cte,
             cnpjCorreios: !!cnpjExists,
@@ -312,40 +334,44 @@ export default function cteRoutes(
         })
       );
 
+      // Agrupar os CTe's para cada motorista com whatsApp true
       const motoristasComCtes = motoristasSalvos
-      .map((motorista) => {
-        const ctesDoMotorista = ctesEnriched.filter(
-          (cte) => cte.placaVeiculo === motorista.placa 
-        );
+        .map((motorista) => {
+          // Filtrar os CTe's relacionados ao motorista (pela relação motoristaId)
+          const ctesDoMotorista = ctesEnriched.filter(
+            (cte) => cte.motoristaId === motorista.id
+          );
 
-        const motoristaComNome = {
-          ...motorista,
-          nome: ctesDoMotorista[0]?.motorista?.nome || null, 
-        };
-        const ctesEnviados = ctesDoMotorista.filter((cte) => cte.statusId === 2);
-        const ctesNaoEnviados = ctesDoMotorista.filter((cte) => cte.statusId === 1);
-        return ctesNaoEnviados.length > 0 && ctesEnviados.length == 0
-          ? {
-              ...motoristaComNome,
-              ctes: ctesDoMotorista.filter((cte) => cte.statusId === 1),
-              ctesEnviados: ctesEnviados.length,
-              ctesNaoEnviados: ctesNaoEnviados.length,
-            } : null;
-      })
-      .filter(Boolean); // Remove itens nulos
-        
+          const ctesEnviados = ctesDoMotorista.filter(
+            (cte) => cte.statusId === 2
+          );
+          const ctesNaoEnviados = ctesDoMotorista.filter(
+            (cte) => cte.statusId === 1
+          );
+
+          return ctesNaoEnviados.length > 0 && ctesEnviados.length === 0
+            ? {
+                ...motorista,
+                ctes: ctesDoMotorista.filter((cte) => cte.statusId === 1),
+                placa: ctesDoMotorista[0].placaVeiculo,
+                ctesEnviados: ctesEnviados.length,
+                ctesNaoEnviados: ctesNaoEnviados.length,
+              }
+            : null;
+        })
+        .filter(Boolean);
 
       reply.status(200).send(motoristasComCtes);
     } catch (error) {
       console.error(error);
       reply.status(500).send({ error: "Failed to list CTe" });
     }
-  });  
+  });
 
   fastify.get("/PlacasMotoristasCtes", async (request, reply) => {
     try {
       const { unidade } = request.query as { unidade: string };
-  
+
       // Buscar os CTe's com base nos filtros
       const ctes = await prisma.ctes.findMany({
         where: {
@@ -357,27 +383,38 @@ export default function cteRoutes(
           motorista: true,
         },
       });
-  
-      // Criar um mapa para armazenar as placas únicas e os nomes dos motoristas
-      const placasMotoristasMap = new Map();
-  
-      ctes.forEach(cte => {
+
+      // Criar um mapa para contar as ocorrências de cada combinação de placa e motorista
+      const placasMotoristasMap = new Map<
+        string,
+        { placaVeiculo: string; nomeMotorista: string; cteContador: number }
+      >();
+
+      ctes.forEach((cte) => {
         if (cte.placaVeiculo && cte.motorista?.nome) {
-          placasMotoristasMap.set(cte.placaVeiculo, cte.motorista.nome);
+          // Cria uma chave composta usando a placa e o nome do motorista
+          const key = `${cte.placaVeiculo}_${cte.motorista.nome}`;
+          if (placasMotoristasMap.has(key)) {
+            placasMotoristasMap.get(key)!.cteContador++;
+          } else {
+            placasMotoristasMap.set(key, {
+              placaVeiculo: cte.placaVeiculo,
+              nomeMotorista: cte.motorista.nome,
+              cteContador: 1,
+            });
+          }
         }
       });
-  
+
       // Converter o mapa para um array de objetos
-      const placasMotoristas = Array.from(placasMotoristasMap).map(([placa, nome]) => ({
-        placaVeiculo: placa,
-        nomeMotorista: nome,
-      }));
-  
+      const placasMotoristas = Array.from(placasMotoristasMap.values());
+      
+      placasMotoristas.sort((a, b) => a.nomeMotorista.localeCompare(b.nomeMotorista));
+      
       reply.status(200).send(placasMotoristas);
     } catch (error) {
       console.error(error);
       reply.status(500).send({ error: "Failed to list CTe" });
     }
-  }
-);  
+  });
 }
