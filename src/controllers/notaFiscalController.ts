@@ -149,7 +149,7 @@ export default function notaFiscalController(
         doc.fontSize(7).text(`DESTINATÁRIO: ${stop.destinatario}`);
         doc.moveDown(0.2);
 
-        doc.fontSize(7).text(`TELEFONE: ${stop.telefone || stop.celular}`);
+        doc.fontSize(7).text(`TELEFONE: ${stop.telefone || 'N INF.'} / ${stop.celular || 'N INF.'}`);
         doc.moveDown(0.2);
 
         doc.fontSize(7).text(`BAIRRO: ${stop.bairro}`, { align: "left" });
