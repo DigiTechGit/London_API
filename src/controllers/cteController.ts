@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { FastifyInstance } from "fastify";
-import { FastifyInstance } from "fastify";
 
 export default function cteRoutes(
   fastify: FastifyInstance,
