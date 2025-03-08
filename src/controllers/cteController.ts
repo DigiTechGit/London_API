@@ -349,7 +349,7 @@ export default function cteRoutes(
             (cte) => cte.statusId === 1
           );
 
-          return ctesNaoEnviados.length > 0 && ctesEnviados.length === 0
+          return ctesNaoEnviados.length > 0
             ? {
                 ...motorista,
                 ctes: ctesDoMotorista.filter((cte) => cte.statusId === 1),
