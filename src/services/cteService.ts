@@ -51,7 +51,6 @@ async function GenerateToken() {
 export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
   try {
     const startTimeTotal = Date.now(); // Início do processo
-
     // Chamada à API
     const startTimeAPI = Date.now();
     const url = `${endpoints.roteirizaRomaneioStockfy}?siglaEnt=${UNIDADE}`;
@@ -65,9 +64,10 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     });
     const endTimeAPI = Date.now();
     const durationAPI = (endTimeAPI - startTimeAPI) / 1000;
-
+    
     // Processar resposta da API
     const cachedCtes = cacheCtes.get(UNIDADE) || [];
+    // const cachedCtes: any[] = [];
     let text = await response.text();
     const startTimeParsing = Date.now();
     text = text.replace(/"cep":(\d+)/g, (match, p1) => `"cep":"${p1}"`);
@@ -85,14 +85,15 @@ export async function buscarEInserirCtesRecorrente(UNIDADE: string) {
     // Atualizar cache
     cacheCtes.set(UNIDADE, filteredCTES);
     if (cachedCtes.length === 0) return;
-    
     // Comparar e processar CTes
     const startTimeProcessing = Date.now();
     const { novos, removidos, modificados } = compararCtes(
       cachedCtes,
       filteredCTES,
     );
-  
+    console.log(`CTEs novos: ${novos.length}`);
+    console.log(`CTEs removidos: ${removidos.length}`);
+    console.log(`CTEs modificados: ${modificados.length}`);
     const adicionados = await adicionarCTEs(novos, UNIDADE);
     const CTESremovidos = await removerCTEs(removidos, UNIDADE);
     const atualizados = await atualizarCTEs(modificados, UNIDADE);
