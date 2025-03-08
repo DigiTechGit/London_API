@@ -46,10 +46,11 @@ export default function motoristaSSWRoutes(fastify: FastifyInstance, prisma: Pri
   fastify.put('/MotoristasSSW/:id', async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const { telefone } = request.body as { telefone: string };
+      const { telefone, whatsApp } = request.body as { telefone: string, whatsApp: boolean
+       };
       const MotoristaSSW = await prisma.motorista_ssw.update({
         where: { id: Number(id) },
-        data: { telefone },
+        data: { telefone , whatsApp},
       });
       reply.send(MotoristaSSW);
     } catch (error: unknown) {
