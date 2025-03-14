@@ -131,7 +131,8 @@ export default function notaFiscalController(
     for (let i = 0; i < Nfes.length; i++) {
       const indice = i + 1;
       const stops = Nfes[i];
-
+      const quebraPagina = indice % 4 === 0;
+      
       for (const stop of stops) {
         // Título
         // if (currentPage > 1) doc.moveDown(2);
@@ -242,15 +243,17 @@ export default function notaFiscalController(
           .stroke();
         doc.fontSize(7).text(`GRAU DE PARENTESCO`, { align: "right" });
 
-        doc.moveDown(1); // Espaço extra após a linha
-        doc
-          .moveTo(doc.page.margins.left, doc.y)
-          .lineTo(doc.page.width - doc.page.margins.right, doc.y)
-          .stroke();
-        doc.moveDown(2); // Espaço extra após a linha
+        doc.moveDown(quebraPagina ? 2 : 5); // Espaço extra após a linha
+        if(!quebraPagina){
+          doc
+            .moveTo(doc.page.margins.left, doc.y)
+            .lineTo(doc.page.width - doc.page.margins.right, doc.y)
+            .stroke();
+          doc.moveDown(5); // Espaço extra após a linha
+        }
       }
 
-      if (indice % 5 === 0) {
+      if (quebraPagina) {
         doc
           .fontSize(7)
           .text(`Página ${currentPage}`, {
