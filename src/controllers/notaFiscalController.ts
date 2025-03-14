@@ -1,9 +1,10 @@
-import fastify, {
+import { PrismaClient } from "@prisma/client";
+import {
   FastifyInstance,
   FastifyReply,
   FastifyRequest,
 } from "fastify";
-import { PrismaClient } from "@prisma/client";
+import { buscarCep } from "../utils/cep";
 
 const headers = new Headers();
 headers.append("Content-Type", "application/json");
@@ -16,8 +17,7 @@ export default function notaFiscalController(
   fastify: FastifyInstance,
   prisma: PrismaClient,
 ) {
-  fastify.get(
-    "/notaFiscal/listarPorPlaca",
+  fastify.get("/notaFiscal/listarPorPlaca",
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const { placa } = request.query as { placa: string };
@@ -38,6 +38,8 @@ export default function notaFiscalController(
         });
         let motorista: any = "";
 
+        const CNPJ_CEP = await prisma.cnpjTb.findMany({where: {idAtivo: true,}})
+
         const nFEs = await Promise.all(
 			ctesMotorista.map(async (cte) => {
             if (motorista == "") {
@@ -47,6 +49,9 @@ export default function notaFiscalController(
               };
             }
 
+            if (CNPJ_CEP.some(item => item.CNPJ === cte.remetente.cnpjCPF)) {
+              cte.recebedor.endereco = await buscarCep(cte.recebedor.cep);
+            }
             const objNFe = cte.NotaFiscal.map((nfe: any) => ({
               chaveCte: cte.chaveCTe,
               chaveNfe: nfe.chaveNFe,

@@ -1,4 +1,4 @@
-const buscarCep = async (cep: number) => {
+export const buscarCep = async (cep: string) => {
     try {
       const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
 
@@ -16,6 +16,6 @@ const buscarCep = async (cep: number) => {
       return data.logradouro; // Retorna os dados do CEP
     } catch (error) {
       console.error(error);
-      return null; // Retorna null em caso de erro
+      return ""; // Retorna null em caso de erro
     }
   };
