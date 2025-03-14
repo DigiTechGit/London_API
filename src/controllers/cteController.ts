@@ -297,13 +297,13 @@ export default function cteRoutes(
       });
 
       // Obter os IDs dos motoristas para filtrar os CTe's
-      const motoristaIds = motoristasSalvos.map((motorista) => motorista.id);
+      const motoristaIds = motoristasSalvos.map((motorista) => motorista.nome);
 
       // Buscar os CTe's com base nos filtros e filtrando pelo motoristaId
       const ctes = await prisma.ctes.findMany({
         where: {
           codUltOco: 85,
-          motoristaId: { in: motoristaIds },
+          motorista: { nome: {in: motoristaIds} },
           Unidade: unidade.toUpperCase(),
           listarCTE: true,
         },
@@ -334,12 +334,13 @@ export default function cteRoutes(
         })
       );
 
+      console.log(motoristasSalvos.length)
       // Agrupar os CTe's para cada motorista com whatsApp true
       const motoristasComCtes = motoristasSalvos
         .map((motorista) => {
           // Filtrar os CTe's relacionados ao motorista (pela relação motoristaId)
           const ctesDoMotorista = ctesEnriched.filter(
-            (cte) => cte.motoristaId === motorista.id
+            (cte) => cte.motorista.nome === motorista.nome
           );
 
           const ctesEnviados = ctesDoMotorista.filter(
@@ -360,6 +361,8 @@ export default function cteRoutes(
             : null;
         })
         .filter(Boolean);
+
+        console.log(motoristasComCtes.length)
 
       reply.status(200).send(motoristasComCtes);
     } catch (error) {
