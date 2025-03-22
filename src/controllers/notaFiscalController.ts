@@ -1,9 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import {
-  FastifyInstance,
-  FastifyReply,
-  FastifyRequest,
-} from "fastify";
+import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { buscarCep } from "../utils/cep";
 
 const headers = new Headers();
@@ -11,13 +7,14 @@ headers.append("Content-Type", "application/json");
 
 const PDFDocument = require("pdfkit");
 const bwipjs = require("bwip-js");
-const QRCode = require('qrcode')
+const QRCode = require("qrcode");
 
 export default function notaFiscalController(
   fastify: FastifyInstance,
   prisma: PrismaClient,
 ) {
-  fastify.get("/notaFiscal/listarPorPlaca",
+  fastify.get(
+    "/notaFiscal/listarPorPlaca",
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const { placa } = request.query as { placa: string };
@@ -25,23 +22,25 @@ export default function notaFiscalController(
         const ctesMotorista = await prisma.ctes.findMany({
           where: {
             placaVeiculo: placa,
-			listarCTE: true,
-			codUltOco: 85,
+            listarCTE: true,
+            codUltOco: 85,
           },
-		  include: {
-			motorista: true,
-			NotaFiscal: true,
-			remetente: true,
-			destinatario: true,
-			recebedor: true,
-		  },
+          include: {
+            motorista: true,
+            NotaFiscal: true,
+            remetente: true,
+            destinatario: true,
+            recebedor: true,
+          },
         });
         let motorista: any = "";
 
-        const CNPJ_CEP = await prisma.cnpjTb.findMany({where: {idAtivo: true,}})
+        const CNPJ_CEP = await prisma.cnpjTb.findMany({
+          where: { idAtivo: true },
+        });
 
         const nFEs = await Promise.all(
-			ctesMotorista.map(async (cte) => {
+          ctesMotorista.map(async (cte) => {
             if (motorista == "") {
               motorista = {
                 ...cte.motorista,
@@ -49,12 +48,12 @@ export default function notaFiscalController(
               };
             }
 
-            if (CNPJ_CEP.some(item => item.CNPJ === cte.remetente.cnpjCPF)) {
+            if (CNPJ_CEP.some((item) => item.CNPJ === cte.remetente.cnpjCPF)) {
               cte.recebedor.endereco = await buscarCep(cte.recebedor.cep);
             }
             const objNFe = cte.NotaFiscal.map((nfe: any) => ({
               chaveCte: cte.chaveCTe,
-              chaveNfe: nfe.chaveNFe,
+              chaveNFe: nfe.chaveNFe,
               nrNfre: nfe.nroNF,
               qtdeVolumes: nfe.qtdeVolumes,
               remetente: cte.remetente.nome,
@@ -79,7 +78,7 @@ export default function notaFiscalController(
 
         const nFEsOrdenadas = nFEs.sort((a, b) => {
           if (a[0].cep < b[0].cep) return -1; // `a` vem antes de `b`
-          if (a[0].cep > b[0].cep) return 1;  // `a` vem depois de `b`
+          if (a[0].cep > b[0].cep) return 1; // `a` vem depois de `b`
           return 0; // `a` e `b` são iguais
         });
 
@@ -119,25 +118,24 @@ export default function notaFiscalController(
         align: "left",
       })
       .text(` NOME: ${data.motorista.nome}`, {
-        align: "left"
+        align: "left",
       });
-      doc.moveDown(0.5); // Espaço extra após a linha
-      doc
-        .moveTo(doc.page.margins.left, doc.y)
-        .lineTo(doc.page.width - doc.page.margins.right, doc.y)
-        .stroke();
-      doc.moveDown(0.5); // Espaço extra após a linha
+    doc.moveDown(0.5); // Espaço extra após a linha
+    doc
+      .moveTo(doc.page.margins.left, doc.y)
+      .lineTo(doc.page.width - doc.page.margins.right, doc.y)
+      .stroke();
+    doc.moveDown(0.5); // Espaço extra após a linha
     // Loop pelas paradas
     for (let i = 0; i < Nfes.length; i++) {
       const indice = i + 1;
       const stops = Nfes[i];
       const quebraPagina = indice % 4 === 0;
-      
       for (const stop of stops) {
         // Título
         // if (currentPage > 1) doc.moveDown(2);
         doc
-        // .moveTo(doc.page.margins.left, doc.y)
+          // .moveTo(doc.page.margins.left, doc.y)
           .fontSize(7)
           .text(`NF: ${stop.nrNfre}`, { continued: true, align: "left" })
           .fontSize(7)
@@ -155,21 +153,29 @@ export default function notaFiscalController(
         doc.fontSize(7).text(`DESTINATÁRIO: ${stop.destinatario}`);
         doc.moveDown(0.2);
 
-        doc.fontSize(7).text(`TELEFONE: ${stop.telefone || 'N INF.'} / ${stop.celular || 'N INF.'}`);
+        doc
+          .fontSize(7)
+          .text(
+            `TELEFONE: ${stop.telefone || "N INF."} / ${
+              stop.celular || "N INF."
+            }`,
+          );
         doc.moveDown(0.2);
 
         doc.fontSize(7).text(`BAIRRO: ${stop.bairro}`, { align: "left" });
-        if (stop.chaveNfe || stop.chaveCTe) {
-          const chave = stop.chaveNfe || stop.chaveCTe;
+        if (stop.chaveNFe || stop.chaveCTe) {
+          const chave = stop.chaveNFe && stop.chaveNFe.trim() !== "" ? stop.chaveNFe : stop.chaveCTe;
           const qrCodeBuffer = await generateQRCode(chave);
-          doc.image(qrCodeBuffer,
+          doc.image(
+            qrCodeBuffer,
             doc.page.width - doc.page.margins.right - 300,
-            doc.y  - 30, 
+            doc.y - 30,
             {
-            fit: [60, 60], // Tamanho do QR Code
-            align: "center",
-            valign: "top",
-          });
+              fit: [60, 60], // Tamanho do QR Code
+              align: "center",
+              valign: "top",
+            },
+          );
 
           const barcodeBuffer = await generateBarcode(chave);
           doc.image(
@@ -244,7 +250,7 @@ export default function notaFiscalController(
         doc.fontSize(7).text(`GRAU DE PARENTESCO`, { align: "right" });
 
         doc.moveDown(quebraPagina ? 2 : 5); // Espaço extra após a linha
-        if(!quebraPagina){
+        if (!quebraPagina) {
           doc
             .moveTo(doc.page.margins.left, doc.y)
             .lineTo(doc.page.width - doc.page.margins.right, doc.y)
@@ -254,12 +260,10 @@ export default function notaFiscalController(
       }
 
       if (quebraPagina) {
-        doc
-          .fontSize(7)
-          .text(`Página ${currentPage}`, {
-            align: "center",
-            baseline: "bottom",
-          });
+        doc.fontSize(7).text(`Página ${currentPage}`, {
+          align: "center",
+          baseline: "bottom",
+        });
         if (indice < Nfes.length) doc.addPage();
 
         currentPage++;
@@ -304,13 +308,171 @@ export default function notaFiscalController(
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
   };
 
-  async function generateQRCode(chaveNfe: any) {
+  async function generateQRCode(chaveNFe: any) {
     try {
-      const qrCodeBuffer = await QRCode.toBuffer(chaveNfe);
+      const qrCodeBuffer = await QRCode.toBuffer(chaveNFe);
       return qrCodeBuffer;
     } catch (error) {
-      console.error('Erro ao gerar QR Code:', error);
+      console.error("Erro ao gerar QR Code:", error);
       throw error;
     }
   }
+
+  fastify.get(
+    "/notaFiscal/listarObjPorPlaca",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { placa } = request.query as { placa: string };
+
+        const ctesMotorista = await prisma.ctes.findMany({
+          where: {
+            placaVeiculo: placa,
+            listarCTE: true,
+            codUltOco: 85,
+          },
+          include: {
+            motorista: true,
+            NotaFiscal: true,
+            remetente: true,
+            destinatario: true,
+            recebedor: true,
+          },
+        });
+        let motorista: any = "";
+
+        const CNPJ_CEP = await prisma.cnpjTb.findMany({
+          where: { idAtivo: true },
+        });
+
+        const nFEs = await Promise.all(
+          ctesMotorista.map(async (cte) => {
+            if (motorista == "") {
+              motorista = {
+                ...cte.motorista,
+                placa: placa,
+              };
+            }
+
+            if (CNPJ_CEP.some((item) => item.CNPJ === cte.remetente.cnpjCPF)) {
+              cte.recebedor.endereco = await buscarCep(cte.recebedor.cep);
+            }
+            const objNFe = cte.NotaFiscal.map((nfe: any) => ({
+              chaveCte: cte.chaveCTe,
+              chaveNFe: nfe.chaveNFe,
+              nrNfre: nfe.nroNF,
+              qtdeVolumes: nfe.qtdeVolumes,
+              remetente: cte.remetente.nome,
+              prevEntrega: cte.previsaoEntrega,
+              destinatario: cte.destinatario.nome,
+              bairro: cte.recebedor.bairro,
+              cep: cte.recebedor.cep,
+              endereco: cte.recebedor.endereco,
+              numero: cte.recebedor.numero,
+              cidade: cte.recebedor.cidade,
+              telefone: cte.recebedor.foneContato,
+              celular: cte.recebedor.celularContato,
+              uf: cte.recebedor.uf,
+              complemento: cte.recebedor.complemento,
+              ctesPorParada: ctesMotorista.filter(
+                (ctePorParada: any) => ctePorParada.cte === cte.id,
+              ),
+            }));
+            return objNFe;
+          }),
+        );
+
+        const nFEsOrdenadas = nFEs.sort((a, b) => {
+          if (a[0].cep < b[0].cep) return -1; // `a` vem antes de `b`
+          if (a[0].cep > b[0].cep) return 1; // `a` vem depois de `b`
+          return 0; // `a` e `b` são iguais
+        });
+
+        const res = {
+          motorista: motorista,
+          Nfes: nFEsOrdenadas,
+        };
+
+        return res;
+      } catch (error: any) {
+        reply.code(500).send({ error: error.message });
+      }
+    },
+  );
+
+  fastify.get(
+    "/notaFiscal/listarPorCte",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { id } = request.query as { id: number };
+
+        const cte = await prisma.ctes.findMany({
+          where: {
+            id: Number(id),
+          },
+          include: {
+            motorista: true,
+            NotaFiscal: true,
+            remetente: true,
+            destinatario: true,
+            recebedor: true,
+          },
+        });
+        let motorista: any = "";
+
+        const CNPJ_CEP = await prisma.cnpjTb.findMany({
+          where: { idAtivo: true },
+        });
+
+        const nFEs = await Promise.all(
+          cte.map(async (cte) => {
+            if (motorista == "") {
+              motorista = {
+                ...cte.motorista,
+              };
+            }
+
+            if (CNPJ_CEP.some((item) => item.CNPJ === cte.remetente.cnpjCPF)) {
+              cte.recebedor.endereco = await buscarCep(cte.recebedor.cep);
+            }
+            const objNFe = cte.NotaFiscal.map((nfe: any) => ({
+              chaveCte: cte.chaveCTe,
+              chaveNFe: nfe.chaveNFe,
+              nrNfre: nfe.nroNF,
+              qtdeVolumes: nfe.qtdeVolumes,
+              remetente: cte.remetente.nome,
+              prevEntrega: cte.previsaoEntrega,
+              destinatario: cte.destinatario.nome,
+              bairro: cte.recebedor.bairro,
+              cep: cte.recebedor.cep,
+              endereco: cte.recebedor.endereco,
+              numero: cte.recebedor.numero,
+              cidade: cte.recebedor.cidade,
+              telefone: cte.recebedor.foneContato,
+              celular: cte.recebedor.celularContato,
+              uf: cte.recebedor.uf,
+              complemento: cte.recebedor.complemento,
+              ctesPorParada: cte,
+            }));
+            return objNFe;
+          }),
+        );
+
+        const nFEsOrdenadas = nFEs.sort((a, b) => {
+          if (a[0].cep < b[0].cep) return -1; // `a` vem antes de `b`
+          if (a[0].cep > b[0].cep) return 1; // `a` vem depois de `b`
+          return 0; // `a` e `b` são iguais
+        });
+
+        const res = {
+          motorista: motorista,
+          Nfes: nFEsOrdenadas,
+        };
+
+        return res;
+      } catch (error: any) {
+        reply.code(500).send({ error: error.message });
+      }
+    },
+  );
+
 }
