@@ -62,7 +62,7 @@ whatsappRoutes(fastify, prisma);
 reportRouter(fastify, prisma);
 
 fastify.get('/', async (request, reply) => {
-  reply.send({ status: new Date().toISOString() + ' - Servidor rodando corretamente versão 1.2' });
+  reply.send({ status: new Date().toISOString() + ' - Servidor rodando corretamente versão 1.3' });
 });
 
 cron.schedule('0 4 * * *', async () => {
