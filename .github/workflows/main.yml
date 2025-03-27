@@ -30,7 +30,7 @@ jobs:
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
-        script_timeout: 15m
+        command_timeout: 15m
         script: |
           cd /dados/london_romaneio/London_API
           git pull origin main
