@@ -24,14 +24,16 @@ jobs:
       run: npm run build
 
     - name: Deploy to Server
-      uses: appleboy/ssh-action@v1
-      with:
-        host: ${{ secrets.SERVER_IP }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          cd /dados/london_romaneio/London_API
-          git pull origin main
-          npm install
-          pm2 restart london_romaneio --update-env
-          pm2 save
+          uses: appleboy/ssh-action@v1
+          with:
+            host: ${{ secrets.SERVER_IP }}
+            username: ${{ secrets.SSH_USER }}
+            key: ${{ secrets.SSH_PRIVATE_KEY }}
+            port: 22
+            script_timeout: 15m
+            script: |
+              cd /dados/london_romaneio/London_API
+              git pull origin main
+              npm install
+              pm2 restart london_romaneio --update-env
+              pm2 save
