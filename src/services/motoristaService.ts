@@ -17,7 +17,6 @@ export class MotoristaService {
   
       for (const motorista of motoristas) {
         const driverId = motorista.idCircuit;
-        console.log(driverId);
   
         const response = await fetch(`${endpoints.getCircuitBase}/${driverId}`, {
           method: 'GET',
@@ -26,6 +25,7 @@ export class MotoristaService {
   
         if (response.ok) {
           const driverData = await response.json();
+          if(driverData.active){
           driversWithDetails.push({
             id: motorista.id,
             idCircuit: motorista.idCircuit,
@@ -34,6 +34,9 @@ export class MotoristaService {
             email: driverData.email,
             active: driverData.active,
           });
+          }else{
+            prisma.motorista.delete({where: {id: motorista.id}})
+          }
         } else {
           console.log(`Falha ao obter dados do driver ${driverId}`);
         }
