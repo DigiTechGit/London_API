@@ -30,6 +30,8 @@ var endpoints = {
   // Endpoint para gerar o token de autenticação
   roteirizaRomaneioStockfy: `${API_BASE_URL}/roteirizaRomaneioStockfy`,
   // Endpoint para roteirizar um romaneio
+  trackingdanfe: `${API_BASE_URL}/trackingdanfe`,
+  // Endpoint para roteirizar um romaneio
   getCircuitBase: `${API_CIRCUIT_BASE_URL}`
 };
 // Annotate the CommonJS export names for ESM import in node:

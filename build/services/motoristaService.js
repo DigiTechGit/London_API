@@ -33,6 +33,8 @@ var endpoints = {
   // Endpoint para gerar o token de autenticação
   roteirizaRomaneioStockfy: `${API_BASE_URL}/roteirizaRomaneioStockfy`,
   // Endpoint para roteirizar um romaneio
+  trackingdanfe: `${API_BASE_URL}/trackingdanfe`,
+  // Endpoint para roteirizar um romaneio
   getCircuitBase: `${API_CIRCUIT_BASE_URL}`
 };
 
@@ -49,21 +51,24 @@ var MotoristaService = class {
       const driversWithDetails = [];
       for (const motorista of motoristas) {
         const driverId = motorista.idCircuit;
-        console.log(driverId);
         const response = await fetch(`${endpoints.getCircuitBase}/${driverId}`, {
           method: "GET",
           headers
         });
         if (response.ok) {
           const driverData = await response.json();
-          driversWithDetails.push({
-            id: motorista.id,
-            idCircuit: motorista.idCircuit,
-            placa: motorista.placa,
-            name: driverData.name,
-            email: driverData.email,
-            active: driverData.active
-          });
+          if (driverData.active) {
+            driversWithDetails.push({
+              id: motorista.id,
+              idCircuit: motorista.idCircuit,
+              placa: motorista.placa,
+              name: driverData.name,
+              email: driverData.email,
+              active: driverData.active
+            });
+          } else {
+            prisma.motorista.delete({ where: { id: motorista.id } });
+          }
         } else {
           console.log(`Falha ao obter dados do driver ${driverId}`);
         }
