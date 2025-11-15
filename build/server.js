@@ -5,6 +5,13 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -21,6 +28,159 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+
+// src/utils/auth/password.ts
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const derived = crypto.pbkdf2Sync(password, salt, iterations, keylen, digest);
+  const hash = derived.toString("hex");
+  return `${digest}:${iterations}:${salt}:${hash}`;
+}
+function verifyPassword(password, stored) {
+  const [dg, iterStr, salt, hash] = stored.split(":");
+  const iter = Number(iterStr);
+  const derived = crypto.pbkdf2Sync(password, salt, iter, hash.length / 2, dg);
+  const calc = derived.toString("hex");
+  const a = Buffer.from(hash, "hex");
+  const b = Buffer.from(calc, "hex");
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+var crypto, iterations, keylen, digest;
+var init_password = __esm({
+  "src/utils/auth/password.ts"() {
+    "use strict";
+    crypto = __toESM(require("crypto"));
+    iterations = Number(process.env.PBKDF2_ITERATIONS ?? 12e4);
+    keylen = Number(process.env.PBKDF2_KEYLEN ?? 32);
+    digest = process.env.PBKDF2_DIGEST ?? "sha256";
+  }
+});
+
+// src/utils/auth/jwt.ts
+function base64url(input) {
+  const buf = Buffer.isBuffer(input) ? input : Buffer.from(input);
+  return buf.toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+}
+function sign(data, secret) {
+  const hmac = crypto2.createHmac("sha256", secret);
+  hmac.update(data);
+  return base64url(hmac.digest());
+}
+function createJWT(payload, expiresInSec = 3600) {
+  const header = { alg: "HS256", typ: "JWT" };
+  const now = Math.floor(Date.now() / 1e3);
+  const body = { ...payload, iat: now, exp: now + expiresInSec };
+  const secret = process.env.JWT_SECRET || "";
+  const encodedHeader = base64url(JSON.stringify(header));
+  const encodedPayload = base64url(JSON.stringify(body));
+  const toSign = `${encodedHeader}.${encodedPayload}`;
+  const signature = sign(toSign, secret);
+  return `${toSign}.${signature}`;
+}
+function verifyJWT(token) {
+  try {
+    const secret = process.env.JWT_SECRET || "";
+    const parts = token.split(".");
+    if (parts.length !== 3) return { valid: false, error: "Formato inv\xE1lido" };
+    const [h, p, s] = parts;
+    const expected = sign(`${h}.${p}`, secret);
+    const bs = Buffer.from(s);
+    const be = Buffer.from(expected);
+    if (bs.length !== be.length || !crypto2.timingSafeEqual(bs, be)) {
+      return { valid: false, error: "Assinatura inv\xE1lida" };
+    }
+    const payload = JSON.parse(Buffer.from(p.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString());
+    const now = Math.floor(Date.now() / 1e3);
+    if (payload.exp && now > payload.exp) return { valid: false, error: "Token expirado" };
+    return { valid: true, payload };
+  } catch (e) {
+    return { valid: false, error: e?.message || "Erro ao validar token" };
+  }
+}
+var crypto2;
+var init_jwt = __esm({
+  "src/utils/auth/jwt.ts"() {
+    "use strict";
+    crypto2 = __toESM(require("crypto"));
+  }
+});
+
+// src/controllers/authController.ts
+var authController_exports = {};
+__export(authController_exports, {
+  default: () => authController
+});
+function authController(fastify2, prisma6) {
+  const db = prisma6;
+  fastify2.post("/auth/register", async (request, reply) => {
+    try {
+      const { nome, email, senha, cargos } = request.body;
+      const exists = await db.usuario?.findUnique({ where: { email } });
+      if (exists) {
+        reply.code(409).send({ error: "E-mail j\xE1 cadastrado" });
+        return;
+      }
+      const senhaHash = hashPassword(senha);
+      const usuario = await db.usuario.create({ data: { nome, email, senhaHash } });
+      if (cargos && cargos.length) {
+        for (const nomeCargo of cargos) {
+          const cargo = await db.cargo.upsert({ where: { nome: nomeCargo }, update: {}, create: { nome: nomeCargo } });
+          await db.usuarioCargo.create({ data: { usuarioId: usuario.id, cargoId: cargo.id } });
+        }
+      }
+      reply.code(201).send({ id: usuario.id });
+    } catch (error) {
+      reply.code(500).send({ error: error.message || "Erro ao registrar" });
+    }
+  });
+  fastify2.post("/auth/login", async (request, reply) => {
+    try {
+      const { email, senha } = request.body;
+      const usuario = await db.usuario.findUnique({ where: { email }, include: { cargos: { include: { cargo: true } } } });
+      if (!usuario) {
+        reply.code(401).send({ error: "Credenciais inv\xE1lidas" });
+        return;
+      }
+      const ok = verifyPassword(senha, usuario.senhaHash);
+      if (!ok) {
+        reply.code(401).send({ error: "Credenciais inv\xE1lidas" });
+        return;
+      }
+      const roles = usuario.cargos.map((uc) => uc.cargo.nome);
+      const token = createJWT({ sub: usuario.id, email: usuario.email, roles });
+      reply.code(200).send({ token });
+    } catch (error) {
+      reply.code(500).send({ error: error.message || "Erro ao autenticar" });
+    }
+  });
+  fastify2.get("/auth/me", async (request, reply) => {
+    try {
+      const auth = request.headers.authorization;
+      if (!auth) {
+        reply.code(401).send({ error: "Token ausente" });
+        return;
+      }
+      const token = auth.replace(/^Bearer\s+/i, "");
+      const { valid, payload, error } = verifyJWT(token);
+      if (!valid) {
+        reply.code(401).send({ error: error || "Token inv\xE1lido" });
+        return;
+      }
+      const usuario = await db.usuario.findUnique({ where: { id: payload.sub } });
+      reply.code(200).send({ id: usuario?.id, email: usuario?.email, nome: usuario?.nome, roles: payload.roles });
+    } catch (error) {
+      reply.code(500).send({ error: error.message || "Erro ao validar" });
+    }
+  });
+}
+var init_authController = __esm({
+  "src/controllers/authController.ts"() {
+    "use strict";
+    init_password();
+    init_jwt();
+  }
+});
 
 // src/server.ts
 var import_client5 = require("@prisma/client");
@@ -3241,6 +3401,7 @@ async function AtualizarCtesRecorrente() {
 var jobRunning = false;
 var jobRelatorioRunning = false;
 import_dotenv.default.config();
+var AUTH_ENABLED = process.env.AUTH_ENABLED === "true";
 var fastify = (0, import_fastify.default)({
   logger: true
   //https: {
@@ -3273,6 +3434,11 @@ notaFiscalController(fastify, prisma5);
 recebedorRoutes(fastify, prisma5);
 whatsappRoutes(fastify, prisma5);
 reportRouter(fastify, prisma5);
+if (AUTH_ENABLED) {
+  Promise.resolve().then(() => (init_authController(), authController_exports)).then((mod) => {
+    mod.default(fastify, prisma5);
+  });
+}
 fastify.get("/", async (request, reply) => {
   reply.send({ status: (/* @__PURE__ */ new Date()).toISOString() + " - Servidor rodando corretamente vers\xE3o 1.3" });
 });

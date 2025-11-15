@@ -187,3 +187,27 @@ model Historico {
   entidade       String
   codigoEntidade Int
 }
+
+model Usuario {
+  id        String         @id @default(uuid())
+  nome      String
+  email     String         @unique
+  senhaHash String
+  ativo     Boolean        @default(true)
+  cargos    UsuarioCargo[]
+}
+
+model Cargo {
+  id       Int            @id @default(autoincrement())
+  nome     String         @unique
+  usuarios UsuarioCargo[]
+}
+
+model UsuarioCargo {
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+  cargo     Cargo   @relation(fields: [cargoId], references: [id])
+  cargoId   Int
+
+  @@id([usuarioId, cargoId])
+}

@@ -20,11 +20,14 @@ import unidadeRoutes from './controllers/UnidadeController';
 import whatsappRoutes from './controllers/whatsappController';
 import { buscarEInserirCtesRecorrente, buscarEInserirCtesRecorrenteStatusId } from './services/cteService';
 import { AtualizarCtesRecorrente } from './services/RelatorioService';
+ 
 
 let jobRunning = false; 
 let jobRelatorioRunning = false; 
 
 dotenv.config();
+
+const AUTH_ENABLED = process.env.AUTH_ENABLED === 'true';
 
 const fastify = Fastify({ 
   logger: true,
@@ -61,6 +64,12 @@ notaFiscalController(fastify, prisma);
 recebedorRoutes(fastify, prisma);
 whatsappRoutes(fastify, prisma);
 reportRouter(fastify, prisma);
+
+if (AUTH_ENABLED) {
+  import('./controllers/authController').then((mod) => {
+    mod.default(fastify, prisma);
+  });
+}
 
 fastify.get('/', async (request, reply) => {
   reply.send({ status: new Date().toISOString() + ' - Servidor rodando corretamente versão 1.3' });
