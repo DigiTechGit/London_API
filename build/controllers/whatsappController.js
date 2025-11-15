@@ -102,9 +102,81 @@ function whatsappRoutes(fastify, prisma) {
       return { success: false, message: "QR Code n\xE3o dispon\xEDvel." };
     }
   });
+  fastify.get("/whatsapp/test-message", async (request, reply) => {
+    if (!isConnected) {
+      return reply.status(400).send({ error: "Bot not connected" });
+    }
+    io.emit("sendTestMessage", {
+      phone: "41997601739",
+      // Number without +55
+      message: "Teste de whatsapp!"
+    });
+    return { success: true, message: "Test message sent" };
+  });
+  fastify.post("/whatsapp/enviar-base64/:id", async (request, reply) => {
+    const { id } = request.params;
+    const { base64File, fileName, caption } = request.body;
+    const motorista = await prisma.motorista_ssw.findFirst({
+      where: {
+        id: Number(id)
+      }
+    });
+    if (!motorista) {
+      return reply.status(404).send({ error: "Motorista n\xE3o encontrado" });
+    }
+    if (!motorista.telefone) {
+      return reply.status(400).send({ error: "Telefone do motorista n\xE3o cadastrado" });
+    }
+    if (!isConnected) {
+      return reply.status(400).send({ error: "Bot n\xE3o conectado" });
+    }
+    io.emit("sendFile", {
+      phone: motorista.telefone,
+      nome: motorista.nome,
+      base64File,
+      fileName: fileName || `arquivo_${motorista.nome}.xlsx`,
+      caption: caption || "Segue o arquivo em anexo."
+    });
+    return { connected: isConnected, receivedId: id };
+  });
   fastify.post("/whatsapp/enviar/:id", async (request, reply) => {
     const { id } = request.params;
     const { enderecos } = request.body;
+    console.log(enderecos);
+    const base64 = await convertToXlsxReturnBase64(enderecos);
+    const motorista = await prisma.motorista_ssw.findFirst({
+      where: {
+        id: Number(id)
+      }
+    });
+    if (!motorista) {
+      return reply.status(404).send({ error: "Motorista n\xE3o encontrado" });
+    }
+    if (!motorista.telefone) {
+      return reply.status(400).send({ error: "Telefone do motorista n\xE3o cadastrado" });
+    }
+    if (!isConnected) {
+      return reply.status(400).send({ error: "Bot n\xE3o conectado" });
+    }
+    const nmArquivo = `enderecos_${motorista.nome}.xlsx`;
+    io.emit("sendFile", {
+      phone: motorista.telefone,
+      nome: motorista.nome,
+      base64File: base64,
+      fileName: nmArquivo,
+      caption: "Segue em anexo a planilha com os endere\xE7os dos destinat\xE1rios."
+    });
+    return { connected: isConnected, receivedId: id };
+  });
+  fastify.post("/whatsapp/enviar/:id/:empresaID", async (request, reply) => {
+    const { id, empresaID } = request.params;
+    const { enderecos } = request.body;
+    console.log(enderecos);
+    const empresa = await prisma.empresa.findUnique({
+      where: {
+        id: Number(empresaID)
+      }
+    });
     const base64 = await convertToXlsxReturnBase64(enderecos);
     const motorista = await prisma.motorista_ssw.findFirst({
       where: {

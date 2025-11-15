@@ -182,6 +182,20 @@ async function buscarEInserirCtesRecorrenteStatusId(UNIDADE) {
                   nome: cte.nomeMotorista
                 }
               });
+              await prisma.motoristaEmpresa.upsert({
+                where: {
+                  motoristaId_empresaId: {
+                    motoristaId: motoristaData.id,
+                    empresaId: 1
+                  }
+                },
+                update: {},
+                // não atualiza nada, só garante a existência
+                create: {
+                  motoristaId: motoristaData.id,
+                  empresaId: 1
+                }
+              });
             }
             updatePromises.push(
               prisma.ctes.update({
@@ -330,6 +344,20 @@ async function adicionarCTEs(ctes, UNIDADE) {
         nome: cte.nomeMotorista
       }
     });
+    await prisma.motoristaEmpresa.upsert({
+      where: {
+        motoristaId_empresaId: {
+          motoristaId: motoristaData.id,
+          empresaId: 1
+        }
+      },
+      update: {},
+      // não atualiza nada, só garante a existência
+      create: {
+        motoristaId: motoristaData.id,
+        empresaId: 1
+      }
+    });
     const remetenteData = await prisma.remetente.upsert({
       where: { cnpjCPF: cte.remetente.cnpjCPF },
       update: {},
@@ -435,6 +463,20 @@ async function atualizarCTEs(ctes, UNIDADE) {
       create: {
         cpf: cte.cpfMotorista,
         nome: cte.nomeMotorista
+      }
+    });
+    await prisma.motoristaEmpresa.upsert({
+      where: {
+        motoristaId_empresaId: {
+          motoristaId: motorista.id,
+          empresaId: 1
+        }
+      },
+      update: {},
+      // não atualiza nada, só garante a existência
+      create: {
+        motoristaId: motorista.id,
+        empresaId: 1
       }
     });
     await prisma.ctes.updateMany({

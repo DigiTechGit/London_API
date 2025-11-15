@@ -13,6 +13,8 @@ export default function userRoutes(fastify: FastifyInstance, prisma: PrismaClien
         CNPJ: string;
       };
 
+      console.log(request.body)
+
       // Chamada à API da SSW para autenticação
       const authResponse = await fetch(endpoints.generateToken, {
         method: 'POST',

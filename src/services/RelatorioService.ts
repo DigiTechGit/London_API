@@ -71,24 +71,37 @@ export async function AtualizarCtesRecorrente() {
       },
     });
 
-    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
     // Processa os CTEs de forma assíncrona
     const processarCTEs = async () => {
-      let contador = 0;
+      const MAX_REQS_PER_SECOND = 18;
+      const INTERVAL_MS = 1000;
+    
+      let reqCount = 0;
+      let startTime = Date.now();
       let contadorCTE = 0;
+    
+      console.log(ctesAtualizar.length);
+    
       for (const cte of ctesAtualizar) {
         if (cte.NotaFiscal.length > 0) {
           for (const nota of cte.NotaFiscal) {
             const url = endpoints.trackingdanfe;
             const body = JSON.stringify({ chave_nfe: nota.chaveNFe });
-
+    
             try {
-              if (contador >= 18) {
-                await delay(1000); // Respeitar o limite de requisições
-                contador = 0;
+              const now = Date.now();
+    
+              if (reqCount >= MAX_REQS_PER_SECOND) {
+                const elapsed = now - startTime;
+                if (elapsed < INTERVAL_MS) {
+                  await delay(INTERVAL_MS - elapsed);
+                }
+                reqCount = 0;
+                startTime = Date.now();
               }
-
+    
               const response = await fetch(url, {
                 method: "POST",
                 headers: {
@@ -97,32 +110,39 @@ export async function AtualizarCtesRecorrente() {
                 },
                 body: body,
               });
-
-              contador++;
-              contadorCTE ++;
-
+    
+              reqCount++;
+              contadorCTE++;
+    
               if (!response.ok) {
                 continue;
               }
-
+    
               const data: any = await response.json();
-
+    
               if (!data.success || !data.documento.tracking.length) {
-                // console.warn(`${cte.id} Nenhum tracking encontrado para NF-e ${nota.chaveNFe}`);
                 continue;
               }
-
-              // Obtém a última ocorrência do tracking
+    
               const ultimaOcorrencia = data.documento.tracking[data.documento.tracking.length - 1];
               const ocorrenciaTexto = ultimaOcorrencia.ocorrencia;
               const ocorrenciaData = ultimaOcorrencia.data_hora;
               const numeroOcorrencia = ocorrenciaTexto.match(/\((\d+)\)/)?.[1];
+    
+              console.log(ctesAtualizar.length, "==>", contadorCTE, "| ID", cte.id, "| codUltOco", cte.codUltOco);
+    
               if (numeroOcorrencia && cte.codUltOco != numeroOcorrencia) {
+                console.log('Atualizando CTE', cte.id, 'de', cte.codUltOco, 'para', numeroOcorrencia, 'em', ocorrenciaData);
+    
                 await prisma.ctes.update({
                   where: { id: cte.id },
-                  data: { codUltOco: parseInt(numeroOcorrencia), dt_alteracao: new Date(ocorrenciaData)},
+                  data: {
+                    codUltOco: parseInt(numeroOcorrencia),
+                    dt_alteracao: new Date(ocorrenciaData)
+                  },
                 });
               }
+    
             } catch (error) {
               console.error(`Erro na requisição para NF-e ${nota.chaveNFe}:`, error);
             }
@@ -131,9 +151,10 @@ export async function AtualizarCtesRecorrente() {
           await prisma.ctes.update({ where: { id: cte.id }, data: { codUltOco: 0 } });
         }
       }
-
+    
       console.log('Atualizações concluídas.');
     };
+        
 
     await processarCTEs();
 

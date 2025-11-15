@@ -45,6 +45,23 @@ model Ctes {
   NotaFiscal   NotaFiscal[]
 }
 
+model Empresa {
+  id         Int                 @id @default(autoincrement())
+  nome       String
+  cnpj       String              @unique
+  motoristas MotoristaEmpresa[]
+  produtosEnviados ProdutosEnviados[] @relation("EmpresaProdutosEnviados")
+}
+
+model ProdutosEnviados {
+  id        String   @id @default(uuid())
+  status    String
+  motorista Int
+  empresa   Empresa  @relation(fields: [empresaId], references: [id], name: "EmpresaProdutosEnviados")
+  empresaId Int
+  idEntrega String
+}
+
 model Motorista_ssw {
   id       Int     @id @default(autoincrement())
   nome     String
@@ -52,6 +69,16 @@ model Motorista_ssw {
   whatsApp Boolean @default(false)
   cpf      String  @unique
   ctes     Ctes[]
+  empresas   MotoristaEmpresa[]
+}
+
+model MotoristaEmpresa {
+  motorista   Motorista_ssw @relation(fields: [motoristaId], references: [id])
+  motoristaId Int
+  empresa     Empresa   @relation(fields: [empresaId], references: [id])
+  empresaId   Int
+
+  @@id([motoristaId, empresaId])    // PK composta
 }
 
 model Remetente {

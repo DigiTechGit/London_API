@@ -1,25 +1,25 @@
-import Fastify from 'fastify';
 import { PrismaClient } from '@prisma/client';
-import motoristaRoutes from './controllers/motoristaController';
-import cteRoutes from './controllers/cteController';
-import userRoutes from './controllers/LoginController';
-import RouteRomaneioStockfy from './controllers/sswController';
-import statusRoutes from './controllers/statusController';
-import circuitController from './controllers/circuitController';
 import dotenv from 'dotenv';
+import Fastify from 'fastify';
 import cron from 'node-cron';
-import { buscarEInserirCtesRecorrente, buscarEInserirCtesRecorrenteStatusId } from './services/cteService';
-import unidadeRoutes from './controllers/UnidadeController';
-import dadosUsuariosRoutes from './controllers/DadosUsuarioController';
-import fs from 'fs';
-import { AtualizarCtesRecorrente } from './services/RelatorioService';
-import RelatorioRoutes from './controllers/RelatorioController';
+import circuitController from './controllers/circuitController';
 import CNPJRoutes from './controllers/CnpjCorreiosController';
+import cteRoutes from './controllers/cteController';
+import dadosUsuariosRoutes from './controllers/DadosUsuarioController';
+import JadLog from './controllers/jadLogController';
+import userRoutes from './controllers/LoginController';
+import motoristaRoutes from './controllers/motoristaController';
 import motoristaSSWRoutes from './controllers/motoristaSSWController';
 import notaFiscalController from './controllers/notaFiscalController';
 import recebedorRoutes from './controllers/recebedorController';
-import whatsappRoutes from './controllers/whatsappController';
+import RelatorioRoutes from './controllers/RelatorioController';
 import reportRouter from './controllers/ReportController';
+import RouteRomaneioStockfy from './controllers/sswController';
+import statusRoutes from './controllers/statusController';
+import unidadeRoutes from './controllers/UnidadeController';
+import whatsappRoutes from './controllers/whatsappController';
+import { buscarEInserirCtesRecorrente, buscarEInserirCtesRecorrenteStatusId } from './services/cteService';
+import { AtualizarCtesRecorrente } from './services/RelatorioService';
 
 let jobRunning = false; 
 let jobRelatorioRunning = false; 
@@ -46,6 +46,7 @@ fastify.addHook('onRequest', (request, reply, done) => {
 const port =  3000;
 
 statusRoutes(fastify);
+JadLog(fastify);
 motoristaRoutes(fastify, prisma);
 motoristaSSWRoutes(fastify, prisma);
 CNPJRoutes( fastify, prisma);
@@ -114,7 +115,7 @@ cron.schedule('* * 5-23 * * *', async () => {
     // console.log('Iniciando job de busca de CTe...');
 
   const promessas = unidades.map(unidade => {
-    // console.log(`Iniciando processamento da unidade: ${unidade.Unidade}`);
+    console.log(`Iniciando processamento da unidade: ${unidade.Unidade}`);
     return buscarEInserirCtesRecorrente(unidade.Unidade);
   });
 

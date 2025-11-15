@@ -28,10 +28,69 @@ var headers = new Headers();
 headers.append("Content-Type", "application/json");
 headers.append("Authorization", `Basic ${btoa(`${apiKey}:`)}`);
 function motoristaSSWRoutes(fastify, prisma) {
+  fastify.post("/MotoristasSSW", async (request, reply) => {
+    try {
+      console.log("Request body:", request.body);
+      const { cpf, nome, telefone, whatsApp, empresaIds } = request.body;
+      const motorista = await prisma.motorista_ssw.create({
+        data: { cpf, nome, telefone, whatsApp }
+      });
+      for (const empresaId of empresaIds) {
+        await prisma.motoristaEmpresa.create({
+          data: { motoristaId: motorista.id, empresaId }
+        });
+      }
+      reply.send(motorista);
+    } catch (error) {
+      if (error instanceof Error) {
+        reply.code(500).send({ error: error.message });
+      } else {
+        reply.code(500).send({ error: "Erro desconhecido" });
+      }
+    }
+  });
   fastify.get("/MotoristasSSW", async (request, reply) => {
     try {
-      const MotoristaSSW = await prisma.motorista_ssw.findMany();
-      reply.send(MotoristaSSW);
+      const motoristas = await prisma.motorista_ssw.findMany();
+      const motoristasComEmpresa = await Promise.all(
+        motoristas.map(async (motorista) => {
+          const empresaRelacao = await prisma.motoristaEmpresa.findMany({
+            where: { motoristaId: motorista.id }
+          });
+          return {
+            ...motorista,
+            empresa: empresaRelacao || null
+          };
+        })
+      );
+      reply.send(motoristasComEmpresa);
+    } catch (error) {
+      if (error instanceof Error) {
+        reply.code(500).send({ error: error.message });
+      } else {
+        reply.code(500).send({ error: "Erro desconhecido" });
+      }
+    }
+  });
+  fastify.get("/Motoristas/delete/:cpf", async (request, reply) => {
+    try {
+      const { cpf } = request.params;
+      const motorista = await prisma.motorista_ssw.findUnique({
+        where: { cpf },
+        select: { id: true }
+      });
+      if (!motorista) {
+        return reply.code(404).send({ error: "Motorista n\xE3o encontrado" });
+      }
+      await prisma.$transaction([
+        prisma.motoristaEmpresa.deleteMany({
+          where: { motoristaId: motorista.id }
+        }),
+        prisma.motorista_ssw.delete({
+          where: { id: motorista.id }
+        })
+      ]);
+      reply.send({ message: "Motorista exclu\xEDdo com sucesso" });
     } catch (error) {
       if (error instanceof Error) {
         reply.code(500).send({ error: error.message });
@@ -60,11 +119,19 @@ function motoristaSSWRoutes(fastify, prisma) {
   fastify.put("/MotoristasSSW/:id", async (request, reply) => {
     try {
       const { id } = request.params;
-      const { telefone, whatsApp } = request.body;
+      const { telefone, whatsApp, empresaIds } = request.body;
       const MotoristaSSW = await prisma.motorista_ssw.update({
         where: { id: Number(id) },
         data: { telefone, whatsApp }
       });
+      await prisma.motoristaEmpresa.deleteMany({
+        where: { motoristaId: Number(id) }
+      });
+      for (const empresaId of empresaIds) {
+        await prisma.motoristaEmpresa.create({
+          data: { motoristaId: Number(id), empresaId }
+        });
+      }
       reply.send(MotoristaSSW);
     } catch (error) {
       if (error instanceof Error) {

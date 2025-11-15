@@ -43,6 +43,7 @@ function userRoutes(fastify, prisma) {
   fastify.post("/User", async (request, reply) => {
     try {
       const { username, password, CNPJ } = request.body;
+      console.log(request.body);
       const authResponse = await fetch(endpoints.generateToken, {
         method: "POST",
         headers: {

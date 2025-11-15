@@ -93,17 +93,26 @@ async function AtualizarCtesRecorrente() {
     });
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const processarCTEs = async () => {
-      let contador = 0;
+      const MAX_REQS_PER_SECOND = 18;
+      const INTERVAL_MS = 1e3;
+      let reqCount = 0;
+      let startTime2 = Date.now();
       let contadorCTE = 0;
+      console.log(ctesAtualizar.length);
       for (const cte of ctesAtualizar) {
         if (cte.NotaFiscal.length > 0) {
           for (const nota of cte.NotaFiscal) {
             const url = endpoints.trackingdanfe;
             const body = JSON.stringify({ chave_nfe: nota.chaveNFe });
             try {
-              if (contador >= 18) {
-                await delay(1e3);
-                contador = 0;
+              const now = Date.now();
+              if (reqCount >= MAX_REQS_PER_SECOND) {
+                const elapsed = now - startTime2;
+                if (elapsed < INTERVAL_MS) {
+                  await delay(INTERVAL_MS - elapsed);
+                }
+                reqCount = 0;
+                startTime2 = Date.now();
               }
               const response = await fetch(url, {
                 method: "POST",
@@ -113,7 +122,7 @@ async function AtualizarCtesRecorrente() {
                 },
                 body
               });
-              contador++;
+              reqCount++;
               contadorCTE++;
               if (!response.ok) {
                 continue;
@@ -126,10 +135,15 @@ async function AtualizarCtesRecorrente() {
               const ocorrenciaTexto = ultimaOcorrencia.ocorrencia;
               const ocorrenciaData = ultimaOcorrencia.data_hora;
               const numeroOcorrencia = ocorrenciaTexto.match(/\((\d+)\)/)?.[1];
+              console.log(ctesAtualizar.length, "==>", contadorCTE, "| ID", cte.id, "| codUltOco", cte.codUltOco);
               if (numeroOcorrencia && cte.codUltOco != numeroOcorrencia) {
+                console.log("Atualizando CTE", cte.id, "de", cte.codUltOco, "para", numeroOcorrencia, "em", ocorrenciaData);
                 await prisma.ctes.update({
                   where: { id: cte.id },
-                  data: { codUltOco: parseInt(numeroOcorrencia), dt_alteracao: new Date(ocorrenciaData) }
+                  data: {
+                    codUltOco: parseInt(numeroOcorrencia),
+                    dt_alteracao: new Date(ocorrenciaData)
+                  }
                 });
               }
             } catch (error) {
